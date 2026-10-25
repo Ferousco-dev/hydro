@@ -1,0 +1,19 @@
+# Android / Gradle
+.gradle/
+build/
+**/build/
+local.properties
+*.jks
+*.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
