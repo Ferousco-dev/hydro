@@ -36,7 +36,7 @@ fun <T> SegmentedControl(
         modifier = modifier
             .fillMaxWidth()
             .height(36.dp)
-            .background(HydroColors.IceBlue, HydroShapes.Control)
+            .background(HydroColors.IceBlue, HydroShapes.Capsule)
             .padding(2.dp)
     ) {
         options.forEach { (value, label) ->
@@ -47,8 +47,8 @@ fun <T> SegmentedControl(
                     .height(32.dp)
                     .then(
                         if (isSelected) Modifier
-                            .shadow(1.dp, HydroShapes.Control)
-                            .background(HydroColors.FloatingSurface, HydroShapes.Control)
+                            .shadow(1.dp, HydroShapes.Capsule)
+                            .background(HydroColors.FloatingSurface, HydroShapes.Capsule)
                         else Modifier
                     )
                     .clickable(role = Role.Tab) { onSelect(value) }

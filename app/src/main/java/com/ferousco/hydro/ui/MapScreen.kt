@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,79 +12,70 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.ferousco.hydro.BuildConfig
+import com.ferousco.hydro.core.integration.NotificationSeverity
 import com.ferousco.hydro.core.model.ActivityCategory
-import com.ferousco.hydro.ui.components.ActionRow
-import com.ferousco.hydro.ui.components.AppleActivityIndicator
-import com.ferousco.hydro.ui.components.ChatMessageRow
-import com.ferousco.hydro.ui.components.CurrentLocationButton
 import com.ferousco.hydro.ui.components.HydroIconButton
-import com.ferousco.hydro.ui.components.HydroTextButton
+import com.ferousco.hydro.ui.components.CurrentLocationButton
 import com.ferousco.hydro.ui.components.IndicatorSize
+import com.ferousco.hydro.ui.components.AppleActivityIndicator
 import com.ferousco.hydro.ui.components.MapBottomSheet
 import com.ferousco.hydro.ui.components.MapCategory
 import com.ferousco.hydro.ui.components.MapCategoryChips
 import com.ferousco.hydro.ui.components.MapControlGroup
 import com.ferousco.hydro.ui.components.MapGroupButton
 import com.ferousco.hydro.ui.components.MapSearchBar
-import com.ferousco.hydro.ui.components.MetricRow
 import com.ferousco.hydro.ui.components.PhIcon
-import com.ferousco.hydro.ui.components.PhosphorIcon
-import com.ferousco.hydro.ui.components.PlaceDetailsHeader
+import com.ferousco.hydro.ui.components.SegmentedControl
 import com.ferousco.hydro.ui.components.SheetDetent
-import com.ferousco.hydro.ui.components.SheetSectionTitle
-import com.ferousco.hydro.ui.components.SkeletonPlaceDetails
-import com.ferousco.hydro.ui.components.SkeletonPlaceRows
-import com.ferousco.hydro.ui.components.StatusPill
-import com.ferousco.hydro.ui.components.HydroPrimaryButton
 import com.ferousco.hydro.ui.components.rememberMapSheetState
+import com.ferousco.hydro.ui.pages.AlertsPage
+import com.ferousco.hydro.ui.pages.AskInputBar
+import com.ferousco.hydro.ui.pages.AskPage
+import com.ferousco.hydro.ui.pages.NowPage
+import com.ferousco.hydro.ui.pages.TrendsPage
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 import com.ferousco.hydro.ui.theme.HydroShapes
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.maps.model.Tile
 import com.google.android.gms.maps.model.TileProvider
 import com.google.android.gms.maps.model.UrlTileProvider
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import java.net.URL
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+
+private enum class SheetPage(val label: String) { Now("Now"), Trends("Trends"), Ask("Ask"), Alerts("Alerts") }
 
 private val ActivityCategories = listOf(
     MapCategory(ActivityCategory.WALKING, "Walking", PhIcon.Walk),
@@ -109,18 +101,15 @@ private const val FOCUS_ZOOM = 12.5f
 @Composable
 fun MapScreen(
     state: HydroUiState,
-    onRefresh: () -> Unit,
-    onSearch: (String) -> Unit,
-    onDismissSearchError: () -> Unit,
-    onUseMyLocation: () -> Unit,
-    onActivity: (ActivityCategory) -> Unit,
-    onAsk: (String) -> Unit
+    actions: MapActions
 ) {
     val sheetState = rememberMapSheetState()
     val cameraState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(DefaultCamera, 11f)
     }
     var query by remember { mutableStateOf("") }
+    var page by rememberSaveable { mutableStateOf(SheetPage.Now) }
+    var layersOpen by remember { mutableStateOf(false) }
     var airQualityLayer by remember { mutableStateOf(false) }
     var topOverlayHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -133,10 +122,7 @@ fun MapScreen(
     }
     LaunchedEffect(target) {
         if (target != null) {
-            cameraState.animate(
-                com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM),
-                durationMs = 700
-            )
+            cameraState.animate(CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM), durationMs = 700)
         }
     }
 
@@ -151,13 +137,43 @@ fun MapScreen(
                 mapToolbarEnabled = false,
                 myLocationButtonEnabled = false,
                 compassEnabled = true
-            )
+            ),
+            onMapLongClick = { latLng -> actions.onSetDestination(latLng.latitude, latLng.longitude) }
         ) {
             if (airQualityLayer && hasMapsKey) {
                 TileOverlay(
                     tileProvider = remember { airQualityTiles(BuildConfig.GOOGLE_MAPS_API_KEY) },
                     transparency = 0.35f
                 )
+            }
+            if (state.heatLayerOn) {
+                state.heatLayer?.cells?.forEach { cell ->
+                    Circle(
+                        center = LatLng(cell.latitude, cell.longitude),
+                        radius = state.heatLayer.cellRadiusMeters,
+                        fillColor = HydroColors.heat(cell.severity).copy(alpha = 0.38f),
+                        strokeColor = Color.Transparent,
+                        strokeWidth = 0f
+                    )
+                }
+            }
+            state.trip?.let { trip ->
+                if (trip.points.size >= 2) {
+                    trip.points.zipWithNext().forEach { (from, to) ->
+                        Polyline(
+                            points = listOf(LatLng(from.latitude, from.longitude), LatLng(to.latitude, to.longitude)),
+                            color = HydroColors.heat(from.severity),
+                            width = 12f
+                        )
+                    }
+                }
+                MarkerComposable(
+                    state = rememberMarkerState(position = LatLng(trip.destinationLat, trip.destinationLon)),
+                    anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
+                    contentDescription = "Destination"
+                ) {
+                    MapDot(color = HydroColors.TextPrimary)
+                }
             }
             if (target != null) {
                 MarkerComposable(
@@ -166,7 +182,7 @@ fun MapScreen(
                     anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
                     contentDescription = state.locationLabel
                 ) {
-                    LocationDot(searched = state.isCustomLocation)
+                    MapDot(color = if (state.isCustomLocation) HydroColors.Danger else HydroColors.Blue)
                 }
             }
         }
@@ -182,11 +198,11 @@ fun MapScreen(
             MapSearchBar(
                 query = query,
                 onQueryChange = { query = it },
-                onSearch = { onSearch(query) },
+                onSearch = { actions.onSearch(query) },
                 onClear = {
                     query = ""
-                    onDismissSearchError()
-                    if (state.isCustomLocation) onUseMyLocation()
+                    actions.onDismissSearchError()
+                    if (state.isCustomLocation) actions.onUseMyLocation()
                 },
                 isSearching = state.isSearching,
                 modifier = Modifier.padding(horizontal = HydroDimens.ScreenEdge)
@@ -194,7 +210,7 @@ fun MapScreen(
             MapCategoryChips(
                 categories = ActivityCategories,
                 selected = state.activity,
-                onSelect = onActivity,
+                onSelect = actions.onActivity,
                 contentPadding = HydroDimens.ScreenEdge
             )
             state.searchError?.let { message ->
@@ -213,12 +229,12 @@ fun MapScreen(
                         color = HydroColors.Danger,
                         modifier = Modifier.weight(1f).padding(vertical = HydroDimens.SpaceMd)
                     )
-                    HydroIconButton(PhIcon.Close, "Dismiss message", onDismissSearchError)
+                    HydroIconButton(PhIcon.Close, "Dismiss message", actions.onDismissSearchError)
                 }
             }
         }
 
-        // Floating map controls sit just above the sheet and tuck away when it is fully open.
+        // Floating controls sit just above the sheet and tuck away when it is fully open.
         AnimatedVisibility(
             visible = sheetState.detent != SheetDetent.Full,
             enter = fadeIn(),
@@ -232,20 +248,29 @@ fun MapScreen(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceSm)
             ) {
-                if (hasMapsKey) {
-                    MapControlGroup {
-                        MapGroupButton(
-                            icon = PhIcon.Layers,
-                            contentDescription = if (airQualityLayer) "Hide air quality layer" else "Show air quality layer",
-                            onClick = { airQualityLayer = !airQualityLayer },
-                            selected = airQualityLayer,
-                            showDivider = false
-                        )
-                    }
+                if (layersOpen) {
+                    LayersMenu(
+                        heatOn = state.heatLayerOn,
+                        heatLoading = state.heatLayerLoading,
+                        heatError = state.heatLayerError,
+                        airQualityOn = airQualityLayer,
+                        airQualityAvailable = hasMapsKey,
+                        onHeat = actions.onToggleHeatLayer,
+                        onAirQuality = { airQualityLayer = !airQualityLayer }
+                    )
+                }
+                MapControlGroup {
+                    MapGroupButton(
+                        icon = PhIcon.Layers,
+                        contentDescription = if (layersOpen) "Close map layers" else "Open map layers",
+                        onClick = { layersOpen = !layersOpen },
+                        selected = layersOpen || state.heatLayerOn || airQualityLayer,
+                        showDivider = false
+                    )
                 }
                 CurrentLocationButton(
                     following = state.usingDeviceLocation,
-                    onClick = onUseMyLocation
+                    onClick = actions.onUseMyLocation
                 )
             }
         }
@@ -253,28 +278,138 @@ fun MapScreen(
         MapBottomSheet(
             state = sheetState,
             modifier = Modifier.fillMaxSize(),
-            topInset = with(density) { topOverlayHeightPx.toDp() }
+            topInset = with(density) { topOverlayHeightPx.toDp() },
+            contentScrollable = page != SheetPage.Ask,
+            footer = if (page == SheetPage.Ask && state.assistantEnabled) {
+                {
+                    AskInputBar(
+                        enabled = !state.isAsking,
+                        onAsk = actions.onAsk,
+                        onFocused = { sheetState.detent = SheetDetent.Full }
+                    )
+                }
+            } else {
+                null
+            },
+            header = {
+                SegmentedControl(
+                    options = SheetPage.entries.map { it to it.label },
+                    selected = page,
+                    onSelect = {
+                        page = it
+                        if (it == SheetPage.Ask && sheetState.detent == SheetDetent.Peek) sheetState.expand()
+                    },
+                    modifier = Modifier.padding(bottom = HydroDimens.SpaceMd)
+                )
+            }
         ) {
-            PlaceSheetContent(
-                state = state,
-                onRefresh = onRefresh,
-                onAsk = onAsk,
-                onChatFocused = { sheetState.detent = SheetDetent.Full }
-            )
+            when (page) {
+                SheetPage.Now -> NowPage(
+                    state = state,
+                    activityLabel = ActivityCategories.first { it.value == state.activity }.label,
+                    onRefresh = actions.onRefresh,
+                    onRouteHere = actions.onRouteHere,
+                    onTripMode = actions.onTripMode,
+                    onClearTrip = actions.onClearTrip
+                )
+                SheetPage.Trends -> TrendsPage(state)
+                SheetPage.Ask -> AskPage(
+                    state = state,
+                    onAsk = actions.onAsk
+                )
+                SheetPage.Alerts -> AlertsPage(
+                    state = state,
+                    onEnabled = actions.onAlertsEnabled,
+                    onSeverity = actions.onMinimumSeverity,
+                    onQuietHour = actions.onQuietHour
+                )
+            }
         }
     }
 }
 
+/** Every action the screen can trigger, grouped so [MapScreen] stays a pure function of state. */
+data class MapActions(
+    val onRefresh: () -> Unit,
+    val onSearch: (String) -> Unit,
+    val onDismissSearchError: () -> Unit,
+    val onUseMyLocation: () -> Unit,
+    val onActivity: (ActivityCategory) -> Unit,
+    val onAsk: (String) -> Unit,
+    val onToggleHeatLayer: () -> Unit,
+    val onSetDestination: (Double, Double) -> Unit,
+    val onRouteHere: () -> Unit,
+    val onTripMode: (TripMode) -> Unit,
+    val onClearTrip: () -> Unit,
+    val onAlertsEnabled: (Boolean) -> Unit,
+    val onMinimumSeverity: (NotificationSeverity) -> Unit,
+    val onQuietHour: (Boolean, Int) -> Unit
+)
+
 @Composable
-private fun LocationDot(searched: Boolean) {
+private fun MapDot(color: Color) {
     Box(
         modifier = Modifier
             .size(22.dp)
             .shadow(3.dp, CircleShape)
             .background(Color.White, CircleShape)
             .padding(3.dp)
-            .background(if (searched) HydroColors.Danger else HydroColors.Blue, CircleShape)
+            .background(color, CircleShape)
     )
+}
+
+/** Compact layer picker shown above the controls. Each row says what it does and why it may be off. */
+@Composable
+private fun LayersMenu(
+    heatOn: Boolean,
+    heatLoading: Boolean,
+    heatError: String?,
+    airQualityOn: Boolean,
+    airQualityAvailable: Boolean,
+    onHeat: () -> Unit,
+    onAirQuality: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(232.dp)
+            .shadow(3.dp, HydroShapes.Control, clip = false)
+            .background(HydroColors.FloatingSurface, HydroShapes.Control)
+            .padding(vertical = HydroDimens.SpaceXs)
+    ) {
+        LayerRow("Heat", "Where it feels hottest", heatOn, heatLoading, onHeat)
+        if (heatError != null) {
+            Text(
+                heatError,
+                style = MaterialTheme.typography.bodySmall,
+                color = HydroColors.Danger,
+                modifier = Modifier.padding(horizontal = HydroDimens.SpaceLg, vertical = HydroDimens.SpaceXs)
+            )
+        }
+        if (airQualityAvailable) {
+            LayerRow("Air quality", "How clean the air is", airQualityOn, false, onAirQuality)
+        }
+    }
+}
+
+@Composable
+private fun LayerRow(title: String, detail: String, on: Boolean, loading: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Switch, onClick = onToggle)
+            .padding(horizontal = HydroDimens.SpaceLg, vertical = HydroDimens.SpaceMd),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextPrimary)
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = HydroColors.TextSecondary)
+        }
+        when {
+            loading -> AppleActivityIndicator(size = IndicatorSize.Small, color = HydroColors.TextSecondary)
+            on -> Text("On", style = MaterialTheme.typography.labelLarge, color = HydroColors.Blue)
+            else -> Text("Off", style = MaterialTheme.typography.labelLarge, color = HydroColors.TextSecondary)
+        }
+    }
 }
 
 /** Google's air-quality heat-map tiles as a map overlay. Needs the Maps key. */
@@ -284,257 +419,3 @@ private fun airQualityTiles(apiKey: String): TileProvider = object : UrlTileProv
         return URL("https://airquality.googleapis.com/v1/mapTypes/US_AQI/heatmapTiles/$zoom/$x/$y?key=$apiKey")
     }
 }
-
-private fun urgencyColors(urgency: String): Pair<Color, Color> = when (urgency) {
-    "CRITICAL", "HIGH" -> HydroColors.Danger to HydroColors.DangerContainer
-    "MODERATE" -> HydroColors.Warning to HydroColors.WarningContainer
-    "LOW" -> HydroColors.Positive to HydroColors.IceBlue
-    else -> HydroColors.TextSecondary to HydroColors.IceBlue
-}
-
-@Composable
-private fun PlaceSheetContent(
-    state: HydroUiState,
-    onRefresh: () -> Unit,
-    onAsk: (String) -> Unit,
-    onChatFocused: () -> Unit
-) {
-    val hasData = state.airTemperatureCelsius != null || state.heatIndexCelsius != null
-    val activityLabel = ActivityCategories.first { it.value == state.activity }.label
-
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = HydroDimens.SpaceXl)) {
-        if (!hasData && state.errorMessage == null) {
-            SkeletonPlaceDetails()
-            Column(modifier = Modifier.padding(top = HydroDimens.SpaceXl)) { SkeletonPlaceRows() }
-            return@Column
-        }
-
-        PlaceDetailsHeader(
-            title = state.locationLabel,
-            subtitle = listOfNotNull(
-                activityLabel,
-                state.freshnessLabel?.lowercase(Locale.getDefault())?.replaceFirstChar { it.uppercase() },
-                state.observationTime?.let { formatTime(it) }?.let { "Observed $it" }
-            ).joinToString(" · ").ifBlank { null },
-            trailing = {
-                if (state.isLoading) {
-                    Box(Modifier.size(HydroDimens.TouchTarget), contentAlignment = Alignment.Center) {
-                        AppleActivityIndicator(size = IndicatorSize.Medium, color = HydroColors.TextSecondary)
-                    }
-                } else {
-                    HydroIconButton(PhIcon.Refresh, "Refresh conditions", onRefresh)
-                }
-            }
-        )
-
-        state.errorMessage?.let { message ->
-            Text(
-                text = "Couldn't load conditions. $message",
-                style = MaterialTheme.typography.bodyMedium,
-                color = HydroColors.Danger,
-                modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-            )
-            HydroTextButton("Try again", onRefresh)
-        }
-
-        if (hasData) {
-            Row(
-                modifier = Modifier.padding(top = HydroDimens.SpaceSm),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(HydroDimens.SpaceMd)
-            ) {
-                Text(
-                    text = "${state.airTemperatureCelsius.formatOrDash(0)}°",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = HydroColors.TextPrimary
-                )
-                state.feelsLikeCelsius?.let {
-                    Text(
-                        text = "Feels like ${it.formatOrDash(0)}°",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = HydroColors.TextSecondary,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-            }
-
-            state.recommendation?.let { rec ->
-                val (fg, bg) = urgencyColors(rec.urgency)
-                StatusPill(
-                    text = rec.urgency.lowercase().replaceFirstChar { it.uppercase() } + " risk",
-                    foreground = fg,
-                    background = bg,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-                )
-                Text(
-                    text = rec.headline,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = HydroColors.TextPrimary,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-                )
-                Text(
-                    text = rec.summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HydroColors.TextSecondary,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceXs)
-                )
-                rec.bestWindow?.let {
-                    Text(
-                        text = "Coolest window · $it",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = HydroColors.Blue,
-                        modifier = Modifier.padding(top = HydroDimens.SpaceSm)
-                    )
-                }
-                if (rec.actions.isNotEmpty()) {
-                    SheetSectionTitle("What to do")
-                    rec.actions.forEach { (title, detail) -> ActionRow(title, detail) }
-                }
-                if (!rec.isCurrentData) {
-                    Text(
-                        "Based on aging data. Refresh before relying on this.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = HydroColors.Warning,
-                        modifier = Modifier.padding(top = HydroDimens.SpaceSm)
-                    )
-                }
-            }
-            state.recommendationError?.let {
-                Text(
-                    "Advice unavailable: $it",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = HydroColors.Warning,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-                )
-            }
-
-            SheetSectionTitle("Conditions")
-            if (state.heatIndexCelsius != null) {
-                MetricRow(
-                    "Heat index",
-                    "${state.heatIndexCelsius.formatOrDash(0)}° · ${shortCategory(state.heatCategory)}",
-                    icon = PhIcon.Thermometer
-                )
-            }
-            MetricRow("Humidity", state.relativeHumidityPercent.formatOrDash(0).withUnit("%"), icon = PhIcon.Droplet)
-            MetricRow("Wind", state.windSpeedMetersPerSecond.formatOrDash(1).withUnit("m/s"), icon = PhIcon.Wind)
-            MetricRow(
-                "UV index",
-                state.uvIndex.formatOrDash(1) + (state.uvCategory?.let { " · $it" } ?: ""),
-                icon = PhIcon.Outdoor
-            )
-            if (state.heatIndexCelsius == null && state.missingVariables.isNotEmpty()) {
-                Text(
-                    "Missing: ${state.missingVariables.joinToString(", ")}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HydroColors.Warning,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceSm)
-                )
-            }
-
-            if (!state.isLiveAndFresh && state.deliveryOriginLabel != null) {
-                Text(
-                    "This reading is not a fresh live measurement. Treat it as cached or aging data.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HydroColors.Warning,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-                )
-            }
-        }
-
-        AssistantSection(state = state, onAsk = onAsk, onFocused = onChatFocused)
-
-        Text(
-            text = "Weather: Open-Meteo (CC-BY 4.0). Hydro is informational and not medical advice.",
-            style = MaterialTheme.typography.bodySmall,
-            color = HydroColors.TextSecondary,
-            modifier = Modifier.padding(top = HydroDimens.SpaceXl)
-        )
-    }
-}
-
-@Composable
-private fun AssistantSection(
-    state: HydroUiState,
-    onAsk: (String) -> Unit,
-    onFocused: () -> Unit
-) {
-    SheetSectionTitle("Ask Hydro")
-    if (!state.assistantEnabled) {
-        Text(
-            "Add GEMINI_API_KEY to local.properties and rebuild to turn on the assistant.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = HydroColors.TextSecondary
-        )
-        return
-    }
-    var input by remember { mutableStateOf("") }
-    fun submit() {
-        if (input.isNotBlank() && !state.isAsking) {
-            onAsk(input)
-            input = ""
-        }
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceMd)) {
-        state.chat.forEach { ChatMessageRow(it.fromUser, it.text, it.note) }
-        if (state.isAsking) {
-            AppleActivityIndicator(size = IndicatorSize.Medium, color = HydroColors.TextSecondary, contentDescription = "Hydro is thinking")
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(HydroColors.IceBlue, HydroShapes.Search),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = HydroDimens.SpaceLg, top = HydroDimens.SpaceMd, bottom = HydroDimens.SpaceMd),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (input.isEmpty()) {
-                    Text(
-                        "Should I walk 12 km this afternoon?",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = HydroColors.TextSecondary
-                    )
-                }
-                BasicTextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = HydroColors.TextPrimary),
-                    cursorBrush = SolidColor(HydroColors.Blue),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(onSend = { submit() }),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { android.util.Log.d("HydroFocus", "chat focus=${it.isFocused}"); if (it.isFocused) onFocused() }
-                )
-            }
-            HydroIconButton(
-                icon = PhIcon.Send,
-                contentDescription = "Send question",
-                onClick = ::submit,
-                enabled = input.isNotBlank() && !state.isAsking,
-                tint = HydroColors.Blue
-            )
-        }
-    }
-}
-
-/** NWS names are long; "Below NWS Caution Threshold" reads better as "No heat risk". */
-private fun shortCategory(name: String?): String = when {
-    name == null -> "—"
-    name.startsWith("Below NWS Caution") -> "No heat risk"
-    else -> name.removePrefix("NWS ")
-}
-
-private fun String.withUnit(unit: String) = if (this == "—") this else "$this $unit"
-
-private fun Double?.formatOrDash(decimals: Int): String =
-    this?.let { String.format(Locale.getDefault(), "%.${decimals}f", it) } ?: "—"
-
-private fun formatTime(instant: java.time.Instant): String =
-    DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault())
-        .withZone(ZoneId.systemDefault())
-        .format(instant)

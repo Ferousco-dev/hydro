@@ -114,7 +114,7 @@ fun ActionRow(
     Column(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = HydroDimens.SpaceMd)) {
             Text(title, style = MaterialTheme.typography.labelLarge, color = HydroColors.TextPrimary)
-            Text(detail, style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
+            Text(detail, modifier = Modifier.padding(top = 2.dp), style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
         }
         HorizontalDivider(color = HydroColors.Hairline)
     }
@@ -145,7 +145,6 @@ fun StatusPill(
 fun ChatMessageRow(
     fromUser: Boolean,
     text: String,
-    note: String?,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -157,14 +156,6 @@ fun ChatMessageRow(
                 .padding(if (fromUser) 12.dp else 0.dp)
         ) {
             Text(text, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextPrimary)
-            if (note != null) {
-                Text(
-                    "Used: $note",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HydroColors.TextSecondary,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
         }
     }
 }

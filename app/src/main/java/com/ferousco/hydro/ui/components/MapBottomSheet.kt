@@ -20,16 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -72,6 +69,8 @@ fun MapBottomSheet(
     modifier: Modifier = Modifier,
     topInset: Dp = 72.dp,
     header: @Composable () -> Unit = {},
+    footer: (@Composable () -> Unit)? = null,
+    contentScrollable: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -108,7 +107,7 @@ fun MapBottomSheet(
                 .shadow(8.dp, HydroShapes.Sheet, clip = false)
                 .background(HydroColors.SnowWhite, HydroShapes.Sheet)
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
                 // Drag handle: the only draggable region.
                 Box(
                     modifier = Modifier
@@ -152,12 +151,14 @@ fun MapBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                        .navigationBarsPadding()
-                        .imePadding()
+                        .then(if (contentScrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                         .padding(horizontal = HydroDimens.ScreenEdge)
                 ) {
                     content()
+                }
+                // Pinned to the bottom of the sheet, above the keyboard and the system gesture bar.
+                if (footer != null) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = HydroDimens.ScreenEdge)) { footer() }
                 }
             }
         }

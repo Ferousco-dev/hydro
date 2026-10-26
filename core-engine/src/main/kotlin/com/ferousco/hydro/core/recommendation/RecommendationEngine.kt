@@ -278,7 +278,7 @@ object RecommendationEngine {
             current.uvCategory!!.severityRank >= UV_PROTECTION_MIN_RANK ->
             "Protect against sun exposure"
         current.category.severityRank == 1 -> "Take heat precautions"
-        else -> "Below the NWS caution threshold"
+        else -> "No heat risk right now"
     }
 
     private fun summaryFor(
@@ -457,8 +457,8 @@ object RecommendationEngine {
                 RecommendedAction(
                     kind = RecommendedActionKind.MONITOR_CONDITIONS,
                     title = "Re-check before a long outing",
-                    detail = "Nothing currently exceeds the NWS caution or WHO UV thresholds, but conditions can " +
-                        "change. Refresh before you commit to a long outdoor plan."
+                    detail = "Nothing needs action right now, but conditions can change. Check again before a long " +
+                        "outdoor plan."
                 )
             )
         }
@@ -562,8 +562,7 @@ object RecommendationEngine {
         stale: Boolean
     ): List<String> = buildList {
         add(
-            "Recommendations apply fixed NWS and WHO thresholds to ambient conditions; they are not " +
-                "personalised medical advice."
+            "This is general guidance based on heat and UV levels, not personal medical advice."
         )
         if (current.uvCategory == null) {
             add("UV index was unavailable, so sun-protection guidance reflects heat only.")

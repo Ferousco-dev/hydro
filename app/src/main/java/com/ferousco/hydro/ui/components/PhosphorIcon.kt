@@ -35,7 +35,9 @@ enum class PhIcon(@DrawableRes val regular: Int, @DrawableRes val fill: Int? = n
     Warning(R.drawable.ph_warning),
     Droplet(R.drawable.ph_drop),
     Wind(R.drawable.ph_wind),
-    Thermometer(R.drawable.ph_thermometer)
+    Thermometer(R.drawable.ph_thermometer),
+    Plus(R.drawable.ph_plus),
+    Minus(R.drawable.ph_minus)
 }
 
 /**

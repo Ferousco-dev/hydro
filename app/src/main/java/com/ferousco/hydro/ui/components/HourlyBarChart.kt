@@ -60,18 +60,17 @@ fun HourlyBarChart(
         }
         Row(modifier = Modifier.fillMaxWidth()) {
             val marks = hours.indices.filter { it % 6 == 0 }
-            marks.forEachIndexed { index, i ->
+            marks.forEach { i ->
                 Text(
                     text = hours[i].label,
                     style = MaterialTheme.typography.bodySmall,
                     color = HydroColors.TextSecondary,
                     modifier = Modifier.weight(1f)
                 )
-                if (index == marks.lastIndex) Unit
             }
         }
         Text(
-            text = "Dashed line: 27°C, where NWS heat caution starts",
+            text = "Above the dashed line, heat starts to need care",
             style = MaterialTheme.typography.bodySmall,
             color = HydroColors.TextSecondary
         )

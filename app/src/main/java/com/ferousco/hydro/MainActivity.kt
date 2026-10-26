@@ -14,13 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ferousco.hydro.location.DeviceLocationProvider
 import com.ferousco.hydro.ui.HydroViewModel
+import com.ferousco.hydro.ui.MapActions
 import com.ferousco.hydro.ui.MapScreen
 import com.ferousco.hydro.ui.theme.HydroTheme
 import com.ferousco.hydro.ui.theme.LocalReducedMotion
@@ -76,19 +76,30 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
         }
     }
 
-    MapScreen(
-        state = state,
-        onRefresh = viewModel::refresh,
-        onSearch = viewModel::search,
-        onDismissSearchError = viewModel::clearSearchError,
-        onUseMyLocation = {
-            if (locationProvider.hasLocationPermission()) {
-                viewModel.useMyLocation()
-            } else {
-                locationLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-        },
-        onActivity = viewModel::setActivity,
-        onAsk = viewModel::ask
-    )
+    val actions = remember(viewModel) {
+        MapActions(
+            onRefresh = viewModel::refresh,
+            onSearch = viewModel::search,
+            onDismissSearchError = viewModel::clearSearchError,
+            onUseMyLocation = {
+                if (locationProvider.hasLocationPermission()) {
+                    viewModel.useMyLocation()
+                } else {
+                    locationLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                }
+            },
+            onActivity = viewModel::setActivity,
+            onAsk = viewModel::ask,
+            onToggleHeatLayer = viewModel::toggleHeatLayer,
+            onSetDestination = viewModel::setDestination,
+            onRouteHere = viewModel::routeToSearchedPlace,
+            onTripMode = viewModel::setTripMode,
+            onClearTrip = viewModel::clearTrip,
+            onAlertsEnabled = viewModel::setAlertsEnabled,
+            onMinimumSeverity = viewModel::setMinimumSeverity,
+            onQuietHour = viewModel::shiftQuietHour
+        )
+    }
+
+    MapScreen(state = state, actions = actions)
 }

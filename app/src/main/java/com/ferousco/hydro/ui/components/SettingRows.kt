@@ -1,7 +1,6 @@
 package com.ferousco.hydro.ui.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +17,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 
@@ -76,9 +74,9 @@ fun StepperRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(title, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextPrimary, modifier = Modifier.weight(1f))
-            HydroTextButton("−", onDecrement)
+            HydroIconButton(PhIcon.Minus, "Earlier", onDecrement, tint = HydroColors.Blue)
             Text(valueText, style = MaterialTheme.typography.labelLarge, color = HydroColors.TextPrimary)
-            HydroTextButton("+", onIncrement)
+            HydroIconButton(PhIcon.Plus, "Later", onIncrement, tint = HydroColors.Blue)
         }
         HorizontalDivider(color = HydroColors.Hairline)
     }
@@ -92,9 +90,4 @@ fun InfoNote(text: String, modifier: Modifier = Modifier) {
         color = HydroColors.TextSecondary,
         modifier = modifier.padding(top = HydroDimens.SpaceSm)
     )
-}
-
-@Composable
-fun SectionColumn(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) { content() }
 }

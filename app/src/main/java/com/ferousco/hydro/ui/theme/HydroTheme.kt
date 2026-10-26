@@ -75,12 +75,16 @@ object HydroDimens {
 }
 
 object HydroShapes {
+    /** Square-ish things: map buttons, tiles, cards. */
     val Control = RoundedCornerShape(12.dp)
-    val Search = RoundedCornerShape(16.dp)
-    val Chip = RoundedCornerShape(percent = 50)
-    val Sheet = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+
+    /** Anything wide and short is a full capsule: search, chips, segmented control, text inputs. */
+    val Capsule = RoundedCornerShape(percent = 50)
+    val Search = Capsule
+    val Chip = Capsule
+    val Sheet = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     val Skeleton = RoundedCornerShape(6.dp)
-    val Bubble = RoundedCornerShape(14.dp)
+    val Bubble = RoundedCornerShape(16.dp)
 }
 
 private val HydroColorScheme = lightColorScheme(

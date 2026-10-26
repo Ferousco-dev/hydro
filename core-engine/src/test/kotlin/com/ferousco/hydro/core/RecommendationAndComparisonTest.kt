@@ -135,7 +135,7 @@ class RecommendationAndComparisonTest {
         val recommendation = RecommendationEngine.recommend(request(current))
 
         assertEquals(RecommendationUrgency.LOW, recommendation.urgency)
-        assertEquals("Below the NWS caution threshold", recommendation.headline)
+        assertEquals("No heat risk right now", recommendation.headline)
         assertTrue(recommendation.actions.any { it.kind == RecommendedActionKind.MONITOR_CONDITIONS })
         assertTrue(recommendation.summary.contains("not a medical exposure limit"))
         assertFalse(recommendation.summary.contains("safe", ignoreCase = true))

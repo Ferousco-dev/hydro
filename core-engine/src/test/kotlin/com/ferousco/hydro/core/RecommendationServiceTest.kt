@@ -252,7 +252,7 @@ class RecommendationServiceTest {
 
         val value = assertNotNull(recommendation)
         assertEquals(RecommendationUrgency.LOW, value.urgency)
-        assertEquals("Below the NWS caution threshold", value.headline)
+        assertEquals("No heat risk right now", value.headline)
         assertNull(value.bestWindow)
     }
 
