@@ -119,4 +119,23 @@ class DomainModelsAndJsonTest {
         assertTrue(SafeJsonCodec.parse("[[[[[[[[[[1]]]]]]]]]]", maxDepth = 4).isFailure)
         assertTrue(SafeJsonCodec.parse("""{"big":"1234567890"}""", maxChars = 5).isFailure)
     }
+
+    @Test
+    fun `SafeJsonCodec accepts valid surrogate pairs and rejects unpaired surrogates`() {
+        // Valid escaped surrogate pair decodes to one supplementary code point (U+1F600).
+        val emoji = SafeJsonCodec.parseObject("""{"s":"\uD83D\uDE00"}""")
+            .getOrNull()!!.getString("s")!!
+        assertEquals("\uD83D\uDE00", emoji)
+
+        // Unpaired or mismatched surrogates are invalid JSON.
+        assertTrue(SafeJsonCodec.parse("""{"s":"\uD83D"}""").isFailure)
+        assertTrue(SafeJsonCodec.parse("""{"s":"\uDE00"}""").isFailure)
+        assertTrue(SafeJsonCodec.parse("""{"s":"\uD83D\u0041"}""").isFailure)
+        assertTrue(SafeJsonCodec.parse("{\"s\":\"\uD83D\"}").isFailure)
+
+        // The serializer must never emit an unpaired surrogate either.
+        assertFailsWith<IllegalArgumentException> {
+            SafeJsonCodec.stringify(JsonValue.StringValue("\uD83D"))
+        }
+    }
 }

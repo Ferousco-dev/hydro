@@ -178,25 +178,43 @@ Because `gemma-3n-E2B-it-int4.litertlm` (`3.66 GB`) requires **8 GB+ device RAM*
 
 ### Standard Gradle Environment (with Maven Central & Google Maven access)
 
-```bash
-gradle :core-engine:test :app:testDebugUnitTest
-```
-
-### Offline / Restricted Sandbox Verification
-
-When Maven repositories are unreachable, `:core-engine` and `:app` data-layer unit tests can be compiled with `kotlinc -Werror` and executed directly on the JVM:
+The repository ships a Gradle wrapper; no global Gradle installation is required.
 
 ```bash
-./scripts/verify-core-engine.sh
+./gradlew :core-engine:test :app:testDebugUnitTest
 ```
+
+To also build the debug APK:
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+On macOS you can point `JAVA_HOME` at the JDK bundled with Android Studio (JDK 21):
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew :core-engine:test :app:testDebugUnitTest :app:assembleDebug
+```
+
+`scripts/verify-core-engine.sh` is a thin wrapper around the same Gradle tasks.
+
+### Test Coverage and Gaps
 
 All core domain tests use `FakeWeatherProvider`, `FakeHttpTransport`, and `MutableClock` and run completely offline without live weather API calls or an LLM runtime.
 
+- `:core-engine`: 38 JVM tests covering units, JSON parsing (including surrogate validation), heat index reference values, provider mapping/caching, planning/tie ranking, tool schemas, orchestration, and privacy sanitization.
+- `:app`: 3 JVM tests covering the Room store mapping (via a fake DAO) and the LiteRT-LM OpenAPI tool adapter.
+- **Not covered:** the actual Room SQL schema/indices (no instrumentation tests), the Compose UI, real device networking, and on-device Gemma inference. The `:app` tests do not require a model file.
+
 ---
 
-## 9. Current Limitations & Build Blockers
+## 9. Current Limitations
 
 1. **Thermal Model Scope**: NOAA/NWS Heat Index assumes shaded conditions and light wind (~2.5 m/s) for a reference adult walking lightly. Full Wet-Bulb Globe Temperature (WBGT) is not computed because standard forecast APIs do not directly provide black-globe temperature without additional radiative-convective modeling assumptions.
 2. **Route Microclimates**: Activity planning evaluates gridded weather forecasts (`~1–25 km` model resolution) and does not infer street-level tree/building shade, surface albedo, elevation profile, or personal physiological limits.
 3. **Open-Meteo Commercial Licensing**: Default Open-Meteo endpoints are restricted to non-commercial usage under CC-BY 4.0; commercial distribution requires configuring an authorized backend proxy backed by a paid Open-Meteo plan.
-4. **Sandbox Gradle / Android SDK Network Blocker**: Full `./gradlew :app:assembleDebug` requires downloading the Gradle distribution (`services.gradle.org`), Android Gradle Plugin / Android SDK artifacts (`dl.google.com`), and Room/Compose dependencies (`repo.maven.apache.org`), which are blocked by restricted sandbox egress rules. All `:core-engine` production and test sources and `:app` Room persistence sources have been verified with `kotlinc 2.1.21 -Werror` and executed on OpenJDK 21.0.8.
+4. **On-Device Model Provisioning**: The app has no model download/provisioning flow. `LiteRtGemma3nClient` targets `google/gemma-3n-E2B-it-litert-lm`, which requires a 3.66 GB artifact and ≥ 8 GB device RAM; no smaller-model code path exists yet. The current app screen does not invoke the LLM.
+5. **In-Memory Weather Cache**: `DefaultWeatherRepository` caches in process memory only. Observations are persisted to Room, but Room is not yet used as an offline weather cache/fallback.
+6. **Result-Schema Enforcement**: Tool argument schemas are enforced; `ToolDescriptor.resultSchema` is descriptive metadata and is not validated against tool output.
+7. **Location**: The app reads a last-known coarse location fix. There is no continuous location tracking or user-facing location picker yet.

@@ -11,6 +11,23 @@ Whether you're planning a long walk, preparing for extreme heat, exploring an un
 
 ---
 
+## 📌 Implementation Status (October 2026)
+
+This repository is an early-stage prototype, not a finished product. The sections below describe the intended product; this table describes what the code actually does today.
+
+| Capability | Status |
+|---|---|
+| `:core-engine` domain model, Open-Meteo adapter, NOAA/NWS Heat Index, WHO UV index, activity planning, tool registry, Gemma orchestrator | **Implemented and unit-tested** (38 JVM tests) |
+| Android Room persistence adapters | **Implemented**; unit tests use a fake DAO, so the real SQL schema is not exercised |
+| Android app | **One working vertical slice:** current conditions, heat index/UV, provenance/freshness, local history persistence, refresh |
+| On-device Gemma 3n assistant in the app UI | **Not wired.** `LiteRtGemma3nClient` exists, but there is no model download/provisioning flow and the screen does not call the LLM |
+| Interactive map, route planning, background alerts, wearables | **Not implemented** (product roadmap) |
+| CI | **Added** (`.github/workflows/ci.yml`): core tests, app unit tests, debug APK |
+
+The app requires Android 8.0+ (`minSdk 26`) and network access for live weather. The on-device model, when integrated, requires a ~3.66 GB artifact and a device with at least 8 GB RAM.
+
+---
+
 ## 🌍 The Problem
 
 Environmental data is everywhere, but understanding what it means for our daily lives is still a challenge.
@@ -68,6 +85,8 @@ flowchart TD
 Hydro distinguishes between observed conditions, forecast values, and calculated indicators. When information is unavailable, it communicates the limitation instead of inventing an answer.
 
 ## 🚀 Core Features
+
+> The feature descriptions in this section describe the product vision. See **Implementation Status** above for what is currently built.
 
 ### 1. Interactive Environmental Map
 
@@ -394,7 +413,7 @@ Hydro's foundational environmental intelligence engine is implemented in `:core-
 
 Key implemented capabilities:
 
-- **Strongly Typed Domain Models:** Explicit units (`°C`, `°F`, `K`, `%`, `m/s`, `km/h`, `mph`, `kn`, `UVI`, `W/m²`), `FieldAvailability` (`Available` vs `Unavailable` — never substituting `0.0` for missing data), and strict separation between `OBSERVED`, `FORECAST`, and `DERIVED` values.
+- **Strongly Typed Domain Models:** Explicit units (`°C`, `°F`, `K`, `%`, `m/s`, `km/h`, `mph`, `kn`, `UVI`, `W/m²`), `FieldAvailability` (`Available` vs `Unavailable` — never substituting `0.0` for missing data), and strict separation between `OBSERVED`, `FORECAST`, `HISTORICAL_REANALYSIS`, and `DERIVED` values.
 - **Open-Meteo Weather Adapter & Cache Repository:** Typed response mapping for `/v1/forecast` (current & hourly) and `/v1/archive` (historical reanalysis), unit normalization, DST-accurate `unixtime` + IANA `ZoneId` handling, bounded retries, and cache fallback that explicitly marks cached responses (`DeliveryOrigin.LOCAL_CACHE`, `isCurrentAndLive = false`).
 - **Deterministic Heat Assessment:** Official **NOAA / NWS Heat Index** (Steadman simple formula below 80°F and Rothfusz 1990 SR 90-23 regression with low/high-humidity NWS adjustments and caution tiers) plus **WHO / WMO Global Solar UV Index** categories when UV data is available.
 - **Activity Window Planning:** Evaluates candidate departure slots across hourly forecasts, handles DST transitions, flags missing forecast hours or incomplete duration coverage, identifies ties within tolerance, and avoids declaring elevated-heat windows "safe".
@@ -406,17 +425,16 @@ For full architectural details, formulas, schemas, missing-data semantics, and l
 
 ### Running Tests
 
-In a standard developer environment with Gradle, Android SDK, Maven Central, and Google Maven access:
+The repository includes the Gradle wrapper, so no global Gradle install is required. Use JDK 17+ (the Android Studio bundled JDK 21 works):
 
 ```bash
-gradle :core-engine:test :app:testDebugUnitTest
+./gradlew :core-engine:test :app:testDebugUnitTest
+./gradlew :app:assembleDebug
 ```
 
-In an offline or network-restricted JVM environment with `kotlinc` and Java 17+:
+`scripts/verify-core-engine.sh` runs the same Gradle tasks plus the debug APK build.
 
-```bash
-./scripts/verify-core-engine.sh
-```
+Expected result at the time of writing: 38 core-engine tests and 3 app unit tests pass. The Room tests use a fake DAO; there are no instrumentation tests yet, and no model file is needed for the unit tests.
 
 ### On-Device AI References
 

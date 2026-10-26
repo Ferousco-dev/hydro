@@ -212,8 +212,12 @@ sealed interface HeatAssessment {
             require(heatIndexCelsius.unit == TemperatureUnit.CELSIUS) {
                 "Canonical heatIndexCelsius quantity must be stored in CELSIUS."
             }
-            require(inputNature == ValueNature.OBSERVED || inputNature == ValueNature.FORECAST) {
-                "HeatAssessment inputNature must be OBSERVED or FORECAST, got $inputNature."
+            require(
+                inputNature == ValueNature.OBSERVED ||
+                    inputNature == ValueNature.FORECAST ||
+                    inputNature == ValueNature.HISTORICAL_REANALYSIS
+            ) {
+                "HeatAssessment inputNature must be OBSERVED, FORECAST, or HISTORICAL_REANALYSIS, got $inputNature."
             }
         }
     }

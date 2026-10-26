@@ -136,7 +136,8 @@ class EnvironmentalHistoryRepository(
         }
         val sourceType = when {
             assessment.inputNature == ValueNature.FORECAST -> HistoricalRecordDataType.ISSUED_FORECAST
-            isHistoricalReanalysis -> HistoricalRecordDataType.HISTORICAL_REANALYSIS_OBSERVATION
+            assessment.inputNature == ValueNature.HISTORICAL_REANALYSIS || isHistoricalReanalysis ->
+                HistoricalRecordDataType.HISTORICAL_REANALYSIS_OBSERVATION
             else -> HistoricalRecordDataType.OBSERVATION
         }
         val status = when (assessment) {

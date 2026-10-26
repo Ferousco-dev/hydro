@@ -343,7 +343,7 @@ internal class OpenMeteoResponseMapper(
                 unitsObj = unitsObj,
                 header = header,
                 source = source,
-                nature = ValueNature.OBSERVED,
+                nature = ValueNature.HISTORICAL_REANALYSIS,
                 expectUvIndex = false, // /v1/archive does not provide hourly uv_index
                 flagsOut = flags
             )

@@ -12,7 +12,7 @@ import com.ferousco.hydro.core.model.HistoricalWeatherSeries
 import com.ferousco.hydro.core.model.WeatherForecast
 import com.ferousco.hydro.core.provider.HttpGetRequest
 import com.ferousco.hydro.core.provider.HttpTransport
-import com.ferousco.hydro.core.provider.JavaNetHttpTransport
+import com.ferousco.hydro.core.provider.UrlConnectionHttpTransport
 import com.ferousco.hydro.core.provider.RawHttpResponse
 import com.ferousco.hydro.core.provider.WeatherProvider
 import kotlinx.coroutines.CancellationException
@@ -35,7 +35,7 @@ import java.util.Locale
  */
 class OpenMeteoWeatherProvider(
     private val config: OpenMeteoConfig = OpenMeteoConfig(),
-    private val transport: HttpTransport = JavaNetHttpTransport(config.connectTimeout),
+    private val transport: HttpTransport = UrlConnectionHttpTransport(),
     private val freshnessPolicy: FreshnessPolicy = FreshnessPolicy(),
     private val clock: Clock = Clock.systemUTC(),
     private val logger: DiagnosticLogger = NoOpDiagnosticLogger

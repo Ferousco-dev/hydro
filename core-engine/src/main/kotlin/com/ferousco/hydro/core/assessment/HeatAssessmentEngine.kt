@@ -20,6 +20,7 @@ import com.ferousco.hydro.core.model.MeasuredQuantity
 import com.ferousco.hydro.core.model.MissingVariableNotice
 import com.ferousco.hydro.core.model.MissingVariableRole
 import com.ferousco.hydro.core.model.NwsHeatIndexCategory
+import com.ferousco.hydro.core.model.ObservationKind
 import com.ferousco.hydro.core.model.PercentageUnit
 import com.ferousco.hydro.core.model.QualityFlag
 import com.ferousco.hydro.core.model.SpeedUnit
@@ -56,10 +57,15 @@ class HeatAssessmentEngine(
         observation: EnvironmentalObservation,
         allowStaleInput: Boolean = false
     ): HeatAssessment {
+        val inputNature = when (observation.observationKind) {
+            ObservationKind.HISTORICAL_REANALYSIS_OBSERVATION -> ValueNature.HISTORICAL_REANALYSIS
+            ObservationKind.IN_SITU_OBSERVATION,
+            ObservationKind.MODEL_ASSIMILATED_CURRENT -> ValueNature.OBSERVED
+        }
         return assessSnapshot(
             location = observation.effectiveLocation,
             validAt = observation.observedAt,
-            inputNature = ValueNature.OBSERVED,
+            inputNature = inputNature,
             inputSource = observation.source,
             variables = observation.variables,
             quality = observation.quality,
@@ -106,7 +112,10 @@ class HeatAssessmentEngine(
         val missingNotices = collectMissingVariableNotices(variables)
         val baseLimitations = buildStandardLimitations(inputNature, quality)
 
-        if (inputNature != ValueNature.OBSERVED && inputNature != ValueNature.FORECAST) {
+        if (inputNature != ValueNature.OBSERVED &&
+            inputNature != ValueNature.FORECAST &&
+            inputNature != ValueNature.HISTORICAL_REANALYSIS
+        ) {
             return HeatAssessment.Unsupported(
                 assessedAt = assessedAt,
                 validAt = validAt,
@@ -118,7 +127,7 @@ class HeatAssessmentEngine(
                 reason = UnsupportedAssessmentReason.MIXED_INCOMPATIBLE_PROVENANCE,
                 quality = quality,
                 missingInformation = missingNotices,
-                explanation = "Heat assessment requires OBSERVED or FORECAST environmental inputs; received $inputNature.",
+                explanation = "Heat assessment requires OBSERVED, FORECAST, or HISTORICAL_REANALYSIS environmental inputs; received $inputNature.",
                 limitations = baseLimitations
             )
         }
@@ -582,7 +591,11 @@ class HeatAssessmentEngine(
             uvValue: Double?,
             quality: DataQualityAndFreshness
         ): String {
-            val natureLabel = if (inputNature == ValueNature.FORECAST) "Forecast" else "Observed"
+            val natureLabel = when (inputNature) {
+                ValueNature.FORECAST -> "Forecast"
+                ValueNature.HISTORICAL_REANALYSIS -> "Historical reanalysis"
+                else -> "Observed"
+            }
             val cachePrefix = if (quality.flags.contains(QualityFlag.SERVED_FROM_CACHE)) {
                 "[Cached data retrieved at ${quality.retrievedAt}] "
             } else if (quality.freshnessState == FreshnessState.STALE) {
@@ -618,6 +631,9 @@ class HeatAssessmentEngine(
             add("Environmental assessments are informational only and do not account for individual acclimatization, hydration status, age, medications, or medical conditions, nor do they constitute medical advice.")
             if (inputNature == ValueNature.FORECAST) {
                 add("Based on numerical weather forecast data rather than an on-site measurement; actual local microclimate conditions may differ.")
+            }
+            if (inputNature == ValueNature.HISTORICAL_REANALYSIS) {
+                add("Based on historical reanalysis (ERA5 / ECMWF IFS), a model-derived archive estimate rather than an on-site station measurement.")
             }
             if (QualityFlag.MODEL_DERIVED_CURRENT_CONDITION in quality.flags) {
                 add("Current weather input originates from gridded weather-model assimilation rather than an on-site thermometer.")

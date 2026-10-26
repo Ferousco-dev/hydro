@@ -195,7 +195,7 @@ class HydroGemmaOrchestrator(
 
             val requestedCalls = extractRequestedToolCalls(genResponse)
             if (requestedCalls.isEmpty()) {
-                val cleanedAnswer = genResponse.text.trim()
+                val cleanedAnswer = stripToolCallArtifacts(genResponse.text).trim()
                 if (cleanedAnswer.isEmpty()) {
                     return HydroAssistantOutcome.Failed(
                         error = EngineError.InvalidResponse(
@@ -383,20 +383,86 @@ class HydroGemmaOrchestrator(
     }
 
     private fun extractToolCallJsonCandidate(text: String): String? {
-        // 1. Fenced ```tool_call ... ``` or ```json ... ``` containing "tool_call"
-        val fenceMatch = FENCED_BLOCK_REGEX.find(text)
-        if (fenceMatch != null) {
+        // 1. Any fenced ```tool_call ... ``` or ```json ... ``` block containing "tool_call".
+        for (fenceMatch in FENCED_BLOCK_REGEX.findAll(text)) {
             val tag = fenceMatch.groupValues[1].lowercase()
             val body = fenceMatch.groupValues[2].trim()
             if (tag == "tool_call" || body.contains("\"tool_call\"")) {
                 return body
             }
         }
-        // 2. Direct JSON object starting with { and containing "tool_call"
+        // 2. Direct JSON object spanning the whole response.
         if (text.startsWith("{") && text.endsWith("}") && text.contains("\"tool_call\"")) {
             return text
         }
+        // 3. A JSON object embedded in prose ("Sure, let me check. {...}").
+        return findBalancedJsonObject(text, TOOL_CALL_MARKER)
+    }
+
+    /**
+     * Scans for the first syntactically balanced JSON object containing [marker], ignoring braces
+     * inside string literals and escape sequences.
+     */
+    private fun findBalancedJsonObject(text: String, marker: String): String? {
+        var start = text.indexOf('{')
+        while (start >= 0) {
+            val end = findObjectEnd(text, start)
+            if (end != null) {
+                val candidate = text.substring(start, end + 1)
+                if (candidate.contains(marker)) return candidate
+                start = text.indexOf('{', end + 1)
+            } else {
+                start = text.indexOf('{', start + 1)
+            }
+        }
         return null
+    }
+
+    private fun findObjectEnd(text: String, start: Int): Int? {
+        var depth = 0
+        var inString = false
+        var escaped = false
+        for (i in start until text.length) {
+            val c = text[i]
+            if (inString) {
+                when {
+                    escaped -> escaped = false
+                    c == '\\' -> escaped = true
+                    c == '"' -> inString = false
+                }
+            } else {
+                when (c) {
+                    '"' -> inString = true
+                    '{' -> depth++
+                    '}' -> {
+                        depth--
+                        if (depth == 0) return i
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * Removes tool-call JSON blocks from a user-facing answer so a model that mixes prose with a
+     * tool call can never leak raw JSON when the call could not be parsed.
+     */
+    private fun stripToolCallArtifacts(text: String): String {
+        var result = text
+        val fencedBlocks = FENCED_BLOCK_REGEX.findAll(text).toList().asReversed()
+        for (match in fencedBlocks) {
+            val tag = match.groupValues[1].lowercase()
+            val body = match.groupValues[2]
+            if (tag == "tool_call" || body.contains(TOOL_CALL_MARKER)) {
+                result = result.removeRange(match.range)
+            }
+        }
+        while (true) {
+            val embedded = findBalancedJsonObject(result, TOOL_CALL_MARKER) ?: break
+            result = result.replace(embedded, "")
+        }
+        return result.replace(Regex("\\n{3,}"), "\n\n").trim()
     }
 
     private fun inspectToolResultProvenance(
@@ -458,6 +524,7 @@ class HydroGemmaOrchestrator(
 
     companion object {
         private const val COMPONENT = "HydroGemmaOrchestrator"
+        private const val TOOL_CALL_MARKER = "\"tool_call\""
         private val FENCED_BLOCK_REGEX = Regex("```([a-zA-Z0-9_-]*)\\s*([\\s\\S]*?)```")
     }
 }

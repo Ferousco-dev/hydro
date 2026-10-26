@@ -1,26 +1,55 @@
 package com.ferousco.hydro
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ferousco.hydro.location.DeviceLocationProvider
+import com.ferousco.hydro.ui.HydroUiState
+import com.ferousco.hydro.ui.HydroViewModel
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val Background = Color(0xFF101410)
-private val SurfaceColor = Color(0xFF1B211B)
+private val CardColor = Color(0xFF1B211B)
+private val ElevatedCard = Color(0xFF202920)
 private val Lime = Color(0xFFD4F17A)
 private val Muted = Color(0xFF9DA79A)
+private val Warning = Color(0xFFFFC46B)
+private val Danger = Color(0xFFFF8A80)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,109 +59,334 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(
                 colorScheme = darkColorScheme(
                     background = Background,
-                    surface = SurfaceColor,
+                    surface = CardColor,
                     primary = Lime
                 )
             ) {
-                HydroScreen()
+                HydroApp()
             }
         }
     }
 }
 
 @Composable
-private fun HydroScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Background
+private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
+    val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    val locationProvider = DeviceLocationProvider(context)
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
     ) {
+        viewModel.refresh()
+    }
+
+    LaunchedEffect(Unit) {
+        if (!locationProvider.hasLocationPermission()) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
+    HydroScreen(
+        state = state,
+        onRefresh = viewModel::refresh,
+        onRequestLocation = {
+            permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    )
+}
+
+@Composable
+private fun HydroScreen(
+    state: HydroUiState,
+    onRefresh: () -> Unit,
+    onRequestLocation: () -> Unit
+) {
+    Surface(modifier = Modifier.fillMaxSize(), color = Background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column {
-                Text(
-                    text = "HYDRO",
-                    color = Lime,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 4.sp
-                )
+            Header(state)
 
-                Text(
-                    text = "Your environmental scout",
-                    color = Muted,
-                    fontSize = 14.sp
+            if (state.isLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Lime,
+                    trackColor = CardColor
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .background(
-                        Color(0xFF202920),
-                        RoundedCornerShape(28.dp)
-                    )
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = "YOUR ENVIRONMENT",
-                        color = Muted,
-                        fontSize = 11.sp,
-                        letterSpacing = 2.sp
-                    )
-
-                    Text(
-                        text = "Understand the world outside.",
-                        color = Color.White,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 36.sp
-                    )
-                }
-
-                Text(
-                    text = "Environmental data will appear here once the data layer is connected.",
-                    color = Lime,
-                    fontSize = 13.sp
+            state.errorMessage?.let { message ->
+                MessageCard(
+                    title = "Could not load current conditions",
+                    body = message,
+                    accent = Danger
                 )
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(SurfaceColor, RoundedCornerShape(24.dp))
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            if (state.airTemperatureCelsius != null || state.heatIndexCelsius != null) {
+                CurrentConditionsCard(state)
+                HeatAssessmentCard(state)
+                DetailsCard(state)
+            } else if (!state.isLoading && state.errorMessage == null) {
+                MessageCard(
+                    title = "No reading yet",
+                    body = "Pull a fresh observation to see current conditions.",
+                    accent = Muted
+                )
+            }
+
+            ProvenanceRow(state)
+
+            Button(
+                onClick = onRefresh,
+                enabled = !state.isLoading,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Lime,
+                    contentColor = Background,
+                    disabledContainerColor = CardColor,
+                    disabledContentColor = Muted
+                )
             ) {
                 Text(
-                    text = "Environmental snapshot",
-                    color = Color.White,
-                    fontSize = 18.sp,
+                    text = if (state.isLoading) "Fetching…" else "Refresh conditions",
                     fontWeight = FontWeight.SemiBold
                 )
+            }
 
-                Text(
-                    text = "Temperature: Waiting for data",
-                    color = Muted
-                )
+            if (!state.usingDeviceLocation) {
+                TextButton(onClick = onRequestLocation) {
+                    Text(
+                        text = "Use my location",
+                        color = Lime,
+                        fontSize = 13.sp
+                    )
+                }
+            }
 
-                Text(
-                    text = "Humidity: Waiting for data",
-                    color = Muted
-                )
+            Text(
+                text = "Data: Open-Meteo (CC-BY 4.0). Hydro reports deterministic NOAA/NWS " +
+                    "Heat Index values and never presents a medical safety guarantee.",
+                color = Muted,
+                fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
+        }
+    }
+}
 
+@Composable
+private fun Header(state: HydroUiState) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = "HYDRO",
+            color = Lime,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 4.sp
+        )
+        Text(
+            text = state.locationLabel,
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Your environmental scout",
+            color = Muted,
+            fontSize = 13.sp
+        )
+    }
+}
+
+@Composable
+private fun CurrentConditionsCard(state: HydroUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ElevatedCard, RoundedCornerShape(28.dp))
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = "YOUR ENVIRONMENT",
+            color = Muted,
+            fontSize = 11.sp,
+            letterSpacing = 2.sp
+        )
+
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = state.airTemperatureCelsius.formatOrDash(0),
+                color = Color.White,
+                fontSize = 64.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = " °C",
+                color = Muted,
+                fontSize = 22.sp,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
+
+        val feelsLike = state.feelsLikeCelsius
+        if (feelsLike != null) {
+            Text(
+                text = "Feels like ${feelsLike.formatOrDash(1)} °C",
+                color = Muted,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeatAssessmentCard(state: HydroUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardColor, RoundedCornerShape(24.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "HEAT INDEX",
+            color = Muted,
+            fontSize = 11.sp,
+            letterSpacing = 2.sp
+        )
+
+        if (state.heatIndexCelsius != null) {
+            Text(
+                text = "${state.heatIndexCelsius.formatOrDash(1)} °C " +
+                    "(${state.heatIndexFahrenheit.formatOrDash(1)} °F)",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = state.heatCategory ?: "Category unavailable",
+                color = Lime,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+            state.heatCategorySummary?.let {
+                Text(text = it, color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+            }
+        } else {
+            Text(
+                text = state.assessmentExplanation ?: "Heat index not available.",
+                color = Muted,
+                fontSize = 13.sp,
+                lineHeight = 18.sp
+            )
+            if (state.missingVariables.isNotEmpty()) {
                 Text(
-                    text = "Hydro is ready for its next development phase.",
-                    color = Lime,
+                    text = "Missing: ${state.missingVariables.joinToString(", ")}",
+                    color = Warning,
                     fontSize = 12.sp
                 )
             }
         }
+
+        state.uvCategory?.let {
+            Text(text = "UV: $it", color = Muted, fontSize = 13.sp)
+        }
     }
 }
+
+@Composable
+private fun DetailsCard(state: HydroUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardColor, RoundedCornerShape(24.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = "DETAILS",
+            color = Muted,
+            fontSize = 11.sp,
+            letterSpacing = 2.sp
+        )
+        DetailRow("Relative humidity", state.relativeHumidityPercent.formatOrDash(0), "%")
+        DetailRow("Wind speed", state.windSpeedMetersPerSecond.formatOrDash(1), "m/s")
+        DetailRow("UV index", state.uvIndex.formatOrDash(1), "")
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String, unit: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = Muted, fontSize = 14.sp)
+        Text(
+            text = if (value == "—") value else "$value $unit".trim(),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun ProvenanceRow(state: HydroUiState) {
+    if (state.deliveryOriginLabel == null) return
+    val accent = if (state.isLiveAndFresh) Lime else Warning
+    val timestamp = state.observationTime?.let {
+        DateTimeFormatter.ofPattern("d MMM, HH:mm", Locale.getDefault())
+            .withZone(ZoneId.systemDefault())
+            .format(it)
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${state.deliveryOriginLabel} · ${state.freshnessLabel}",
+            color = accent,
+            fontSize = 11.sp,
+            letterSpacing = 1.sp
+        )
+        if (timestamp != null) {
+            Text(text = "Observed $timestamp", color = Muted, fontSize = 11.sp)
+        }
+    }
+
+    if (!state.isLiveAndFresh) {
+        Text(
+            text = "This reading is not a fresh live measurement. Treat it as cached or aging data.",
+            color = Warning,
+            fontSize = 11.sp,
+            lineHeight = 15.sp
+        )
+    }
+}
+
+@Composable
+private fun MessageCard(title: String, body: String, accent: Color) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardColor, RoundedCornerShape(20.dp))
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(text = title, color = accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = body, color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+    }
+}
+
+private fun Double?.formatOrDash(decimals: Int): String =
+    this?.let { String.format(Locale.getDefault(), "%.${decimals}f", it) } ?: "—"

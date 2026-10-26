@@ -133,22 +133,34 @@ object SafeJsonCodec {
 
     private fun writeString(str: String, sb: StringBuilder) {
         sb.append('"')
-        for (ch in str) {
-            when (ch) {
-                '"' -> sb.append("\\\"")
-                '\\' -> sb.append("\\\\")
-                '\b' -> sb.append("\\b")
-                '\u000C' -> sb.append("\\f")
-                '\n' -> sb.append("\\n")
-                '\r' -> sb.append("\\r")
-                '\t' -> sb.append("\\t")
-                else -> if (ch.code < 0x20) {
+        var i = 0
+        while (i < str.length) {
+            val ch = str[i]
+            when {
+                ch == '"' -> sb.append("\\\"")
+                ch == '\\' -> sb.append("\\\\")
+                ch == '\b' -> sb.append("\\b")
+                ch == '\u000C' -> sb.append("\\f")
+                ch == '\n' -> sb.append("\\n")
+                ch == '\r' -> sb.append("\\r")
+                ch == '\t' -> sb.append("\\t")
+                ch.code < 0x20 -> {
                     sb.append("\\u")
                     sb.append(ch.code.toString(16).padStart(4, '0'))
-                } else {
-                    sb.append(ch)
                 }
+                ch.code in 0xD800..0xDBFF -> {
+                    val low = str.getOrNull(i + 1)
+                    require(low != null && low.code in 0xDC00..0xDFFF) {
+                        "Cannot encode unpaired high surrogate at index $i as JSON."
+                    }
+                    sb.append(ch).append(low)
+                    i++
+                }
+                ch.code in 0xDC00..0xDFFF ->
+                    throw IllegalArgumentException("Cannot encode unpaired low surrogate at index $i as JSON.")
+                else -> sb.append(ch)
             }
+            i++
         }
         sb.append('"')
     }
@@ -312,12 +324,45 @@ object SafeJsonCodec {
                                 val code = hex.toIntOrNull(16)
                                     ?: throw JsonSyntaxException("Invalid unicode escape '\\u$hex'.", pos)
                                 pos += 4
-                                sb.append(code.toChar())
+                                when {
+                                    code in 0xD800..0xDBFF -> {
+                                        // A high surrogate is only valid when immediately followed by
+                                        // an escaped low surrogate (RFC 8259 §7).
+                                        if (pos + 6 > text.length || text[pos] != '\\' || text[pos + 1] != 'u') {
+                                            throw JsonSyntaxException(
+                                                "High surrogate '\\u$hex' must be followed by a low surrogate escape.",
+                                                pos
+                                            )
+                                        }
+                                        val lowHex = text.substring(pos + 2, pos + 6)
+                                        val low = lowHex.toIntOrNull(16)
+                                            ?: throw JsonSyntaxException("Invalid unicode escape '\\u$lowHex'.", pos + 2)
+                                        if (low !in 0xDC00..0xDFFF) {
+                                            throw JsonSyntaxException(
+                                                "High surrogate '\\u$hex' is not followed by a low surrogate.",
+                                                pos + 2
+                                            )
+                                        }
+                                        pos += 6
+                                        sb.append(code.toChar()).append(low.toChar())
+                                    }
+                                    code in 0xDC00..0xDFFF ->
+                                        throw JsonSyntaxException("Unpaired low surrogate '\\u$hex'.", pos - 4)
+                                    else -> sb.append(code.toChar())
+                                }
                             }
                             else -> throw JsonSyntaxException("Invalid escape character '\\$esc'.", pos - 1)
                         }
                     }
                     ch.code < 0x20 -> throw JsonSyntaxException("Unescaped control character in JSON string.", pos - 1)
+                    ch.code in 0xD800..0xDBFF -> {
+                        if (pos >= text.length || text[pos].code !in 0xDC00..0xDFFF) {
+                            throw JsonSyntaxException("Unpaired high surrogate in JSON string.", pos - 1)
+                        }
+                        sb.append(ch).append(text[pos++])
+                    }
+                    ch.code in 0xDC00..0xDFFF ->
+                        throw JsonSyntaxException("Unpaired low surrogate in JSON string.", pos - 1)
                     else -> sb.append(ch)
                 }
             }

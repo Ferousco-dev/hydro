@@ -9,6 +9,7 @@ import com.ferousco.hydro.core.model.HeatAssessment
 import com.ferousco.hydro.core.model.MeasuredQuantity
 import com.ferousco.hydro.core.model.MissingVariableRole
 import com.ferousco.hydro.core.model.NwsHeatIndexCategory
+import com.ferousco.hydro.core.model.ObservationKind
 import com.ferousco.hydro.core.model.PercentageUnit
 import com.ferousco.hydro.core.model.TemperatureUnit
 import com.ferousco.hydro.core.model.UnavailableReason
@@ -245,6 +246,27 @@ class HeatAssessmentEngineTest {
             assertEquals(baseline, engine.assessObservation(obs))
         }
         assertNotNull(obsAssessment.primaryMethod.citation)
+    }
+
+    @Test
+    fun `historical reanalysis inputs keep reanalysis provenance instead of being relabeled as observed`() {
+        val reanalysis = TestFixtures.buildObservation(
+            observedAt = fixedNow,
+            retrievedAt = fixedNow,
+            airTempC = 30.5,
+            rhPercent = 70.0,
+            kind = ObservationKind.HISTORICAL_REANALYSIS_OBSERVATION
+        )
+
+        val assessment = engine.assessObservation(reanalysis) as HeatAssessment.Supported
+
+        assertEquals(ValueNature.HISTORICAL_REANALYSIS, assessment.inputNature)
+        assertEquals(
+            ValueNature.HISTORICAL_REANALYSIS,
+            assessment.inputs.airTemperature.quantityOrNull()!!.nature
+        )
+        assertTrue(assessment.explanation.contains("reanalysis", ignoreCase = true))
+        assertTrue(assessment.limitations.any { it.contains("reanalysis", ignoreCase = true) })
     }
 
     @Test

@@ -73,7 +73,22 @@ data class CandidateForecastConditionsSummary(
     val maxUvIndex: Double?,
     val maxSolarRadiationWm2: Double?,
     val missingOptionalVariables: Set<String>
-)
+) {
+    init {
+        require(coveredHourCount > 0) {
+            "coveredHourCount must be positive, got $coveredHourCount."
+        }
+        require(minAirTemperatureCelsius.isFinite() && maxAirTemperatureCelsius.isFinite()) {
+            "Candidate temperature summary must contain finite values."
+        }
+        require(minAirTemperatureCelsius <= maxAirTemperatureCelsius) {
+            "minAirTemperatureCelsius cannot exceed maxAirTemperatureCelsius."
+        }
+        require(meanRelativeHumidityPercent.isFinite() && meanRelativeHumidityPercent in 0.0..100.0) {
+            "meanRelativeHumidityPercent must be finite and within [0, 100], got $meanRelativeHumidityPercent."
+        }
+    }
+}
 
 sealed interface CandidateWindowEvaluation {
     val departureTime: Instant

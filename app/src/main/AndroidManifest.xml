@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Optional: only used to query weather for the user's approximate position. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:allowBackup="true"
+        android:name=".HydroApplication"
+        android:allowBackup="false"
         android:label="Hydro"
         android:supportsRtl="true">
         <!-- Optional OpenCL/VNDK native libraries enabling LiteRT-LM GPU delegate for Gemma 3n on Android -->

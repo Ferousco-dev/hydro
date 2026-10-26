@@ -3,11 +3,20 @@ package com.ferousco.hydro.core.model
 import java.time.Instant
 
 /**
- * Distinguishes observed measurements, future/issued model forecasts, and deterministically derived indicators.
+ * Distinguishes observed measurements, future/issued model forecasts, historical reanalysis
+ * estimates, and deterministically derived indicators.
  */
 enum class ValueNature {
+    /** Direct in-situ measurement or an assimilated current-conditions estimate. */
     OBSERVED,
+
+    /** Future or issued numerical weather prediction value. */
     FORECAST,
+
+    /** Model-generated historical archive value (e.g., ERA5 / ECMWF IFS reanalysis). */
+    HISTORICAL_REANALYSIS,
+
+    /** Deterministically computed indicator such as Heat Index. */
     DERIVED
 }
 

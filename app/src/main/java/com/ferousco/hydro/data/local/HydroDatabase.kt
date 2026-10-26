@@ -30,7 +30,7 @@ abstract class HydroDatabase : RoomDatabase() {
                     HydroDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { instance = it }
             }

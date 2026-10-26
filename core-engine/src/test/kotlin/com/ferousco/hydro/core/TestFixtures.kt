@@ -160,6 +160,17 @@ object TestFixtures {
         resolvedGridLocation = IBADAN
     )
 
+    val TEST_HISTORICAL_SOURCE = EnvironmentalDataSource(
+        providerId = "open-meteo",
+        providerName = "Open-Meteo",
+        endpointOrDataset = "Historical Weather API (/v1/archive)",
+        acquisitionMethod = DataAcquisitionMethod.HISTORICAL_REANALYSIS,
+        modelInfo = "ERA5 / ERA5-Land / ECMWF IFS reanalysis",
+        license = EnvironmentalDataSource.OPEN_METEO_CC_BY_LICENSE,
+        attribution = EnvironmentalDataSource.OPEN_METEO_ATTRIBUTION,
+        resolvedGridLocation = IBADAN
+    )
+
     fun buildVariables(
         validAt: Instant,
         location: GeoLocation = IBADAN,
@@ -204,11 +215,13 @@ object TestFixtures {
         deliveryOrigin: DeliveryOrigin = DeliveryOrigin.LIVE_NETWORK,
         kind: ObservationKind = ObservationKind.MODEL_ASSIMILATED_CURRENT
     ): EnvironmentalObservation {
+        val isReanalysis = kind == ObservationKind.HISTORICAL_REANALYSIS_OBSERVATION
+        val source = if (isReanalysis) TEST_HISTORICAL_SOURCE else TEST_OBSERVATION_SOURCE
         val vars = buildVariables(
             validAt = observedAt,
             location = location,
-            source = TEST_OBSERVATION_SOURCE,
-            nature = ValueNature.OBSERVED,
+            source = source,
+            nature = if (isReanalysis) ValueNature.HISTORICAL_REANALYSIS else ValueNature.OBSERVED,
             airTempC = airTempC,
             rhPercent = rhPercent,
             windMs = windMs,
@@ -216,13 +229,23 @@ object TestFixtures {
             uvIndex = uvIndex,
             solarWm2 = solarWm2
         )
-        val quality = DataQualityAndFreshness.evaluateCurrentObservation(
-            retrievedAt = retrievedAt,
-            evaluatedAt = evaluatedAt,
-            observedAt = observedAt,
-            deliveryOrigin = deliveryOrigin,
-            completenessRatio = vars.completenessRatio()
-        )
+        val quality = if (isReanalysis) {
+            DataQualityAndFreshness.evaluateHistoricalArchive(
+                retrievedAt = retrievedAt,
+                evaluatedAt = evaluatedAt,
+                referenceDataTime = observedAt,
+                deliveryOrigin = deliveryOrigin,
+                completenessRatio = vars.completenessRatio()
+            )
+        } else {
+            DataQualityAndFreshness.evaluateCurrentObservation(
+                retrievedAt = retrievedAt,
+                evaluatedAt = evaluatedAt,
+                observedAt = observedAt,
+                deliveryOrigin = deliveryOrigin,
+                completenessRatio = vars.completenessRatio()
+            )
+        }
         return EnvironmentalObservation(
             requestedLocation = location,
             effectiveLocation = location,
@@ -231,7 +254,7 @@ object TestFixtures {
             timeZone = location.timeZone ?: ZoneId.of("UTC"),
             observationKind = kind,
             variables = vars,
-            source = TEST_OBSERVATION_SOURCE,
+            source = source,
             quality = quality,
             intervalSeconds = 900
         )

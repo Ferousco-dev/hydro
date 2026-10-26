@@ -333,4 +333,70 @@ class Gemma3nOrchestratorTest {
         assertEquals("TOOL_NOT_REGISTERED", loopFailure.partialToolTraces[0].errorCode)
         assertEquals("PERMISSION_DENIED", loopFailure.partialToolTraces[1].errorCode)
     }
+
+    @Test
+    fun `tool calls embedded in prose are executed and raw tool-call JSON never reaches the user`() = runBlocking {
+        val fixedNow = Instant.parse("2026-10-26T12:00:00Z")
+        val clock = MutableClock(fixedNow)
+        val fakeProvider = FakeWeatherProvider().apply {
+            currentResult = EngineResult.Success(
+                TestFixtures.buildObservation(retrievedAt = fixedNow)
+            )
+        }
+        val engine = HydroEngine.create(weatherProvider = fakeProvider, clock = clock)
+        val ready = ModelArtifactReadiness.Ready(
+            modelSpec = Gemma3nModelSpec.GEMMA_3N_E2B_IT_LITERT_LM,
+            resolvedFilePath = "/models/gemma-3n-E2B-it-int4.litertlm",
+            actualFileSizeBytes = Gemma3nModelSpec.GEMMA_3N_E2B_IT_LITERT_LM.expectedSizeBytes,
+            matchesOfficialReleaseSize = true
+        )
+        val runtime = LlmActiveRuntimeInfo(
+            Gemma3nModelSpec.GEMMA_3N_E2B_IT_LITERT_LM,
+            LlmHardwareBackend.CPU,
+            LlmModalityMode.TEXT_ONLY
+        )
+
+        // Prose followed by an un-fenced tool_call object: previously treated as a final answer.
+        val inlineClient = ScriptedGemma3nClient(readiness = ready, runtimeInfo = runtime) { round, _ ->
+            if (round == 0) {
+                LlmGenerationResponse(
+                    text = "Let me check the latest conditions. " +
+                        """{"tool_call":{"name":"get_current_weather","arguments":{"latitude":7.3775,"longitude":3.9470,"timezone":"Africa/Lagos"}}}""",
+                    runtimeInfo = runtime
+                )
+            } else {
+                LlmGenerationResponse(
+                    text = "Current conditions are loaded (Weather data by Open-Meteo.com).",
+                    runtimeInfo = runtime
+                )
+            }
+        }
+        val inlineOutcome = engine.createGemmaOrchestrator(inlineClient)
+            .respond("How is the weather right now?")
+        assertTrue(inlineOutcome is HydroAssistantOutcome.Responded)
+        assertEquals("get_current_weather", inlineOutcome.grounding.executedTools.single().toolName)
+        assertFalse(inlineOutcome.responseText.contains("tool_call"))
+
+        // Same behaviour for prose followed by a fenced JSON block.
+        val fencedClient = ScriptedGemma3nClient(readiness = ready, runtimeInfo = runtime) { round, _ ->
+            if (round == 0) {
+                LlmGenerationResponse(
+                    text = "Checking now.\n\n```json\n" +
+                        """{"tool_call":{"name":"get_current_weather","arguments":{"latitude":7.3775,"longitude":3.9470,"timezone":"Africa/Lagos"}}}""" +
+                        "\n```",
+                    runtimeInfo = runtime
+                )
+            } else {
+                LlmGenerationResponse(
+                    text = "Conditions loaded (Weather data by Open-Meteo.com).",
+                    runtimeInfo = runtime
+                )
+            }
+        }
+        val fencedOutcome = engine.createGemmaOrchestrator(fencedClient)
+            .respond("Weather now?")
+        assertTrue(fencedOutcome is HydroAssistantOutcome.Responded)
+        assertEquals("get_current_weather", fencedOutcome.grounding.executedTools.single().toolName)
+        assertFalse(fencedOutcome.responseText.contains("tool_call"))
+    }
 }

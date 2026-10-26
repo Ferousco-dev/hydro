@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Files
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -137,7 +140,11 @@ class LiteRtGemma3nClientTest {
 
     @Test
     fun `HydroLiteRtOpenApiTool exposes valid OpenAPI declarations and routes execution through HydroToolRegistry`() {
-        val engine = HydroEngine.create()
+        // Pin the engine clock: the tool assesses freshness against "now", so a wall-clock engine
+        // makes this assertion depend on the time of day the suite happens to run.
+        val engine = HydroEngine.create(
+            clock = Clock.fixed(Instant.parse("2026-10-26T12:05:00Z"), ZoneOffset.UTC)
+        )
         val calcDescriptor = engine.toolRegistry.descriptorFor("calculate_heat_assessment")!!
         val openApiTool = HydroLiteRtOpenApiTool(calcDescriptor, engine.toolRegistry)
 

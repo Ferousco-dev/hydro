@@ -237,6 +237,10 @@ class OpenMeteoProviderAndRepositoryTest {
         val firstObs = hist.value.hourlyObservations.single()
         assertEquals(ObservationKind.HISTORICAL_REANALYSIS_OBSERVATION, firstObs.observationKind)
         assertEquals(
+            ValueNature.HISTORICAL_REANALYSIS,
+            firstObs.variables.airTemperature.quantityOrNull()!!.nature
+        )
+        assertEquals(
             UnavailableReason.NOT_PROVIDED_BY_SOURCE,
             (firstObs.variables.uvIndex as FieldAvailability.Unavailable).reason
         )
@@ -295,6 +299,7 @@ class OpenMeteoProviderAndRepositoryTest {
         delay(30)
         deferred.cancel()
         assertFailsWith<CancellationException> { deferred.await() }
+        Unit
     }
 
     @Test

@@ -280,17 +280,23 @@ class ActivityPlanningService(
     private fun rankCandidates(
         candidates: List<UnrankedCompleteCandidate>
     ): List<CandidateWindowEvaluation.Complete> {
+        // Sorting uses a strict total order so TimSort's contract is never violated; tolerance-based
+        // tie grouping is applied afterwards against each group's anchor candidate. This keeps
+        // ranking deterministic even when A≈B and B≈C but A is not within tolerance of C.
         val sorted = candidates.sortedWith { a, b -> compareCandidates(a, b) }
         val leader = sorted.first()
         val tiedWithLeaderCount = sorted.count { areTied(leader, it) }
 
         val ranked = ArrayList<CandidateWindowEvaluation.Complete>(sorted.size)
-        var currentRank = 1
+        var groupAnchor = leader
+        var groupStartIndex = 0
         for (i in sorted.indices) {
             val item = sorted[i]
-            if (i > 0 && !areTied(sorted[i - 1], item)) {
-                currentRank = i + 1
+            if (!areTied(groupAnchor, item)) {
+                groupAnchor = item
+                groupStartIndex = i
             }
+            val currentRank = groupStartIndex + 1
             val tiedForLowest = currentRank == 1 && tiedWithLeaderCount > 1
             ranked.add(
                 CandidateWindowEvaluation.Complete(
@@ -312,24 +318,25 @@ class ActivityPlanningService(
         return ranked
     }
 
+    /**
+     * Strict ordering (no tolerance) used only to produce a deterministic sort.
+     * Tolerance-based equality is evaluated separately by [areTied].
+     */
     private fun compareCandidates(a: UnrankedCompleteCandidate, b: UnrankedCompleteCandidate): Int {
         val catDiff = a.worstCategory.severityRank.compareTo(b.worstCategory.severityRank)
         if (catDiff != 0) return catDiff
 
-        val peakDiff = a.peakHeatIndexCelsius - b.peakHeatIndexCelsius
-        if (abs(peakDiff) > config.peakHeatIndexTieToleranceCelsius) {
-            return peakDiff.compareTo(0.0)
-        }
+        val peakDiff = a.peakHeatIndexCelsius.compareTo(b.peakHeatIndexCelsius)
+        if (peakDiff != 0) return peakDiff
 
-        val meanDiff = a.meanHeatIndexCelsius - b.meanHeatIndexCelsius
-        if (abs(meanDiff) > config.meanHeatIndexTieToleranceCelsius) {
-            return meanDiff.compareTo(0.0)
-        }
+        val meanDiff = a.meanHeatIndexCelsius.compareTo(b.meanHeatIndexCelsius)
+        if (meanDiff != 0) return meanDiff
 
         val uvA = a.conditions.maxUvIndex
         val uvB = b.conditions.maxUvIndex
-        if (uvA != null && uvB != null && abs(uvA - uvB) > config.uvIndexTieTolerance) {
-            return uvA.compareTo(uvB)
+        if (uvA != null && uvB != null) {
+            val uvDiff = uvA.compareTo(uvB)
+            if (uvDiff != 0) return uvDiff
         }
 
         return a.departureTime.compareTo(b.departureTime)
@@ -348,6 +355,12 @@ class ActivityPlanningService(
     private fun summarizeConditions(
         assessments: List<HeatAssessment.Supported>
     ): CandidateForecastConditionsSummary {
+        // A complete window always contains at least one Supported hour, and every Supported
+        // assessment is guaranteed to expose air temperature and relative humidity. Fail fast on an
+        // invariant violation rather than letting NaN reach user-facing evidence strings.
+        check(assessments.isNotEmpty()) {
+            "Cannot summarize a candidate window with zero supported hourly assessments."
+        }
         val temps = assessments.mapNotNull { it.inputs.airTemperature.inUnitOrNull(TemperatureUnit.CELSIUS) }
         val rhs = assessments.mapNotNull { it.inputs.relativeHumidity.rawValueOrNull() }
         val winds = assessments.mapNotNull { it.inputs.windSpeed.inUnitOrNull(SpeedUnit.METERS_PER_SECOND) }
@@ -358,10 +371,14 @@ class ActivityPlanningService(
             .map { it.variableName }
             .toSet()
 
+        check(temps.isNotEmpty() && rhs.isNotEmpty()) {
+            "Supported assessments must expose finite air temperature and relative humidity inputs."
+        }
+
         return CandidateForecastConditionsSummary(
             coveredHourCount = assessments.size,
-            minAirTemperatureCelsius = temps.minOrNull() ?: Double.NaN,
-            maxAirTemperatureCelsius = temps.maxOrNull() ?: Double.NaN,
+            minAirTemperatureCelsius = temps.min(),
+            maxAirTemperatureCelsius = temps.max(),
             meanRelativeHumidityPercent = rhs.average(),
             maxWindSpeedMetersPerSecond = winds.maxOrNull(),
             maxUvIndex = uvs.maxOrNull(),
