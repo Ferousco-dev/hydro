@@ -375,15 +375,48 @@ Historical comparisons must use compatible measurements, timestamps, and locatio
 | Component | Technology | Purpose |
 |---|---|---|
 | Android application | Kotlin | Native application logic and platform integration |
+| Core engine (`:core-engine`) | Pure Kotlin / JVM + Coroutines | Domain models, Open-Meteo adapter, NOAA/NWS heat assessment, activity planning, local history, and AI tool registry |
 | UI | Jetpack Compose | Android user interface |
-| AI inference | LiteRT-LM or another compatible runtime | On-device language-model execution |
-| AI model | Evaluated compact open-weight model | Intent interpretation and tool orchestration |
-| Local persistence | Room / SQLite | Environmental history and preferences |
+| AI inference | LiteRT-LM (`com.google.ai.edge.litertlm:litertlm-android:0.18.0`) | On-device language-model execution (`GPU` / `NPU` / `CPU` cascading fallback) |
+| AI model | `google/gemma-3n-E2B-it-litert-lm` (`gemma-3n-E2B-it-int4.litertlm`) | Multimodal intent interpretation, grounded tool orchestration, and explanation |
+| Local persistence | Room / SQLite (`:app`) + `EnvironmentalHistoryStore` (`:core-engine`) | Environmental history and assessments |
 | Background execution | Android WorkManager | Deferrable background monitoring |
 | Mapping | Android-compatible map SDK | Maps, destinations, and supported environmental layers |
-| Weather data | Verified external APIs | Current conditions, forecasts, and historical data |
+| Weather data | Open-Meteo (CC-BY 4.0 non-commercial) via `WeatherProvider` | Current conditions, hourly forecasts, and historical reanalysis |
 | Wearable integration | Health Connect and supported device APIs | Permission-based access to supported measurements |
-| Testing | Unit, integration, and Android instrumentation tests | Correctness and reliability |
+| Testing | Kotlin/JUnit unit tests + deterministic fixtures | Offline domain, mapping, planning, persistence, and tool verification |
+
+---
+
+## ⚙️ Core Engine Implementation & Developer Guide
+
+Hydro's foundational environmental intelligence engine is implemented in `:core-engine` (`com.ferousco.hydro.core.*`) with Android Room persistence adapters in `:app` (`com.ferousco.hydro.data.local.*`).
+
+Key implemented capabilities:
+
+- **Strongly Typed Domain Models:** Explicit units (`°C`, `°F`, `K`, `%`, `m/s`, `km/h`, `mph`, `kn`, `UVI`, `W/m²`), `FieldAvailability` (`Available` vs `Unavailable` — never substituting `0.0` for missing data), and strict separation between `OBSERVED`, `FORECAST`, and `DERIVED` values.
+- **Open-Meteo Weather Adapter & Cache Repository:** Typed response mapping for `/v1/forecast` (current & hourly) and `/v1/archive` (historical reanalysis), unit normalization, DST-accurate `unixtime` + IANA `ZoneId` handling, bounded retries, and cache fallback that explicitly marks cached responses (`DeliveryOrigin.LOCAL_CACHE`, `isCurrentAndLive = false`).
+- **Deterministic Heat Assessment:** Official **NOAA / NWS Heat Index** (Steadman simple formula below 80°F and Rothfusz 1990 SR 90-23 regression with low/high-humidity NWS adjustments and caution tiers) plus **WHO / WMO Global Solar UV Index** categories when UV data is available.
+- **Activity Window Planning:** Evaluates candidate departure slots across hourly forecasts, handles DST transitions, flags missing forecast hours or incomplete duration coverage, identifies ties within tolerance, and avoids declaring elevated-heat windows "safe".
+- **Local Environmental Memory:** Stores permitted observations, past-issued forecasts, and assessments (via Room on Android or `JsonFileEnvironmentalHistoryStore` / `InMemoryEnvironmentalHistoryStore` on JVM), enforces retention and deletion policies, and validates location, diurnal time-of-day, data-type, and method compatibility before comparing records.
+- **Controlled AI Tool Registry & Gemma 3n Orchestrator:** Schema-validated, capability-gated, timeout-bounded registry implementing `get_current_weather`, `get_hourly_forecast`, `get_historical_weather`, `calculate_heat_assessment`, `compare_forecast_periods`, and `query_local_history`, paired with `HydroGemmaOrchestrator` (`:core-engine`) and `LiteRtGemma3nClient` (`:app`) targeting **`google/gemma-3n-E2B-it-litert-lm`** (`gemma-3n-E2B-it-int4.litertlm`) while keeping all numerical calculations strictly outside the LLM.
+- **Privacy-Safe Diagnostics:** `SanitizingDiagnosticLogger` automatically redacts precise GPS coordinates, URL query coordinates, and credential-like attributes.
+
+For full architectural details, formulas, schemas, missing-data semantics, and limitations, see **[`docs/CORE_ENGINE.md`](docs/CORE_ENGINE.md)**.
+
+### Running Tests
+
+In a standard developer environment with Gradle, Android SDK, Maven Central, and Google Maven access:
+
+```bash
+gradle :core-engine:test :app:testDebugUnitTest
+```
+
+In an offline or network-restricted JVM environment with `kotlinc` and Java 17+:
+
+```bash
+./scripts/verify-core-engine.sh
+```
 
 ### On-Device AI References
 
