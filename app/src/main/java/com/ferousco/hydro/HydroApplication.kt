@@ -8,6 +8,10 @@ import com.ferousco.hydro.core.ai.LlmModelCatalog
 import com.ferousco.hydro.core.ai.gemini.GeminiApiConfig
 import com.ferousco.hydro.core.ai.gemini.GeminiApiLlmClient
 import com.ferousco.hydro.core.integration.GoogleAirQualityProvider
+import com.ferousco.hydro.core.integration.GoogleAreaInsightsProvider
+import com.ferousco.hydro.core.integration.GoogleElevationProvider
+import com.ferousco.hydro.core.integration.GoogleIsochroneProvider
+import com.ferousco.hydro.core.integration.GoogleTimeZoneProvider
 import com.ferousco.hydro.core.integration.GoogleGeocoder
 import com.ferousco.hydro.core.integration.GoogleMapsConfig
 import com.ferousco.hydro.core.integration.GooglePlacesProvider
@@ -71,6 +75,10 @@ class HydroApplication : Application() {
             pollenProvider = GooglePollenProvider(google),
             placesProvider = GooglePlacesProvider(google),
             googleWeatherProvider = GoogleWeatherApiProvider(google),
+            isochroneProvider = GoogleIsochroneProvider(google),
+            areaInsightsProvider = GoogleAreaInsightsProvider(google),
+            elevationProvider = GoogleElevationProvider(google),
+            timeZoneProvider = GoogleTimeZoneProvider(google),
             wearableDataSource = HealthConnectWearableDataSource(this),
             historyStore = RoomEnvironmentalHistoryStore(database.environmentalHistoryDao()),
             preferencesStore = RoomUserPreferencesStore(database.userPreferencesDao()),

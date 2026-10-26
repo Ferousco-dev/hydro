@@ -23,3 +23,11 @@ local.properties
 *.tflite
 models/
 
+skills/
+# Eclipse/VS Code Java extension output (stale copies of sources)
+bin/
+.classpath
+.project
+.settings/
+.vscode/
+.kotlin/

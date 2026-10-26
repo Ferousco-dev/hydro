@@ -16,7 +16,7 @@ flowchart LR
     VM --> ENG["HydroEngine"]
     VM --> ORCH["HydroOrchestrator"]
     ORCH --> LLM["GeminiApiLlmClient"]
-    ORCH --> REG["HydroToolRegistry<br/>20 tools, schema-validated"]
+    ORCH --> REG["HydroToolRegistry<br/>24 tools, schema-validated"]
     ENG --> REG
     REG --> WX["Open-Meteo / Google Weather"]
     REG --> AIR["Air quality / Pollen"]
@@ -35,8 +35,8 @@ flowchart LR
 - Every call has a timeout; failures use a documented error-code set.
 - No arbitrary URL, file or code execution is reachable from the model.
 
-## Tools (20)
-`get_weather`, `get_hourly_forecast`, `get_historical_weather`, `calculate_heat_risk`, `compare_forecast_periods`, `query_memory`, `get_current_location`, `analyze_anomaly`, `get_route_conditions`, `get_heat_map`, `get_wearable_data`, `create_notification`, `plan_hydration`, `get_environmental_news`, `get_air_quality`, `get_solar_climate`, `geocode_place`, `get_pollen`, `find_nearby_relief`, `get_google_weather`.
+## Tools (24)
+`get_weather`, `get_hourly_forecast`, `get_historical_weather`, `calculate_heat_risk`, `compare_forecast_periods`, `query_memory`, `get_current_location`, `analyze_anomaly`, `get_route_conditions`, `get_heat_map`, `get_wearable_data`, `create_notification`, `plan_hydration`, `get_environmental_news`, `get_air_quality`, `get_solar_climate`, `geocode_place`, `get_pollen`, `find_nearby_relief`, `get_google_weather`, `find_relief_within_reach`, `get_area_insights`, `get_elevation_profile`, `get_time_zone`.
 
 ## Provider selection
 `HydroApplication` is the composition root. With `GOOGLE_MAPS_API_KEY`, Google providers are used for routing, geocoding and air quality; otherwise great-circle estimate, Open-Meteo geocoder and Open-Meteo air quality. Providers with no free alternative (pollen, places, Google weather) report unavailable.

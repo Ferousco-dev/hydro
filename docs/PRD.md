@@ -44,7 +44,8 @@ Weather apps report conditions but leave interpretation to the user. In hot, hum
 | F5 | Air quality (EPA/universal AQI, pollutants, health advice) | Done (tool) |
 | F6 | Pollen forecast | Done (tool, region-limited) |
 | F7 | Nearby shade, indoor cooling, water, medical | Done (tool, needs Google key) |
-| F8 | Route-aware conditions along a real route | Done (Google Routes) |
+| F8 | Route-aware conditions along a real route, with elevation | Done (Google Routes + Elevation) |
+| F8b | Relief reachable in N real minutes; area green/medical density; time zone for any place | Done (tools, unverified live) |
 | F9 | Heat-map layer for a radius | Done (data); map rendering pending |
 | F10 | Local news on heat, air, floods, storms | Done (tool, needs Tavily key) |
 | F11 | Local memory and "today vs yesterday" | Done |

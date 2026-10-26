@@ -104,7 +104,11 @@ class HydroToolRegistryTest {
                 "geocode_place",
                 "get_pollen",
                 "find_nearby_relief",
-                "get_google_weather"
+                "get_google_weather",
+                "find_relief_within_reach",
+                "get_area_insights",
+                "get_elevation_profile",
+                "get_time_zone"
             ),
             registry.descriptors().map { it.name }.toSet()
         )
@@ -286,7 +290,7 @@ class HydroToolRegistryTest {
         val exportedJson = registry.exportToolDeclarationsJson()
         val parsedExport = com.ferousco.hydro.core.json.SafeJsonCodec.parse(exportedJson).getOrNull()
         assertTrue(parsedExport is JsonValue.ArrayValue)
-        assertEquals(20, parsedExport.items.size)
+        assertEquals(24, parsedExport.items.size)
         for (item in parsedExport.items) {
             val decl = item as JsonValue.ObjectValue
             assertEquals(false, decl.getObject("parameters")!!.getBoolean("additionalProperties"))

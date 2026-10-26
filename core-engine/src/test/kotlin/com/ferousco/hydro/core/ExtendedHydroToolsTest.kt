@@ -183,7 +183,7 @@ class ExtendedHydroToolsTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `registry exposes all 20 tool names with strict schemas`() = runBlocking {
+    fun `registry exposes all 24 tool names with strict schemas`() = runBlocking {
         val registry = registry(FakeWeatherRepository(), historyRepository())
 
         assertEquals(
@@ -207,7 +207,11 @@ class ExtendedHydroToolsTest {
                 "geocode_place",
                 "get_pollen",
                 "find_nearby_relief",
-                "get_google_weather"
+                "get_google_weather",
+                "find_relief_within_reach",
+                "get_area_insights",
+                "get_elevation_profile",
+                "get_time_zone"
             ),
             registry.descriptors().map { it.name }.toSet()
         )
@@ -215,7 +219,7 @@ class ExtendedHydroToolsTest {
         val declarations = com.ferousco.hydro.core.json.SafeJsonCodec
             .parse(registry.exportToolDeclarationsJson())
             .getOrNull() as com.ferousco.hydro.core.json.JsonValue.ArrayValue
-        assertEquals(20, declarations.items.size)
+        assertEquals(24, declarations.items.size)
         for (item in declarations.items) {
             val decl = item as com.ferousco.hydro.core.json.JsonValue.ObjectValue
             assertEquals(

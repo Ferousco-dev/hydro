@@ -58,13 +58,14 @@ This is a hackathon **MVP**. The intelligence engine is built and tested. The ch
 | Local memory and "today vs. yesterday" comparison | ✅ Working (Room/SQLite) |
 | Forecast verification (how accurate the forecast turned out to be) | ✅ Working |
 | Proactive background alerts (WorkManager, every 30 min) with notifications | ✅ Working |
-| AI tool registry (20 validated tools) and Gemini orchestrator | ✅ Backend wired |
+| AI tool registry (24 validated tools) and Gemini orchestrator | ✅ Backend wired |
 | Live news on heat, air quality, floods and storms for your area (Tavily) | ✅ Tool ready, needs `TAVILY_API_KEY` |
 | Air quality: US AQI, PM2.5, PM10, ozone, NO₂, SO₂, CO, dust (Open-Meteo) | ✅ Tool ready, no key needed |
 | Recent solar irradiance, temperature range and rainfall (NASA POWER) | ✅ Tool ready, no key needed |
 | Android dashboard: current conditions, heat index, UV, freshness | ✅ One vertical slice |
 | Chat UI for the AI assistant | 🚧 Next up |
 | Real routes (walk/bike/drive/transit), geocoding, nearby shade/cooling/medical (Google Maps Platform) | ✅ Tools ready, need `GOOGLE_MAPS_API_KEY` |
+| "What's reachable in 10 minutes on foot?" (Isochrones), area green/medical density, route elevation, time zone for any place | ✅ Tools ready, need `GOOGLE_MAPS_API_KEY` |
 | Pollen forecast and Google weather second opinion | ✅ Tools ready, need `GOOGLE_MAPS_API_KEY` |
 | Heat-map data layer (grid of heat index/UV/temperature) | ✅ Data ready, map rendering is next |
 | Wearables via Health Connect (read-only) | ✅ Data source ready, permission screen is next |
@@ -118,11 +119,11 @@ sequenceDiagram
 - **Model-agnostic.** `LlmClient` is an interface. A benchmark harness scores tool-selection accuracy so that choosing a Gemini tier is a measurement.
 - **News is treated as untrusted.** Article text is length-capped, labelled as third-party data, and the model is told never to follow instructions inside it. Only a place name, never coordinates, is sent to the news provider.
 
-### The 20 AI tools
+### The 24 AI tools
 
-`get_weather` · `get_hourly_forecast` · `get_historical_weather` · `calculate_heat_risk` · `compare_forecast_periods` · `query_memory` · `get_current_location` · `analyze_anomaly` · `get_route_conditions` · `get_heat_map` · `get_wearable_data` · `create_notification` · `plan_hydration` · `get_environmental_news` · `get_air_quality` · `get_solar_climate` · `geocode_place` · `get_pollen` · `find_nearby_relief` · `get_google_weather`
+`get_weather` · `get_hourly_forecast` · `get_historical_weather` · `calculate_heat_risk` · `compare_forecast_periods` · `query_memory` · `get_current_location` · `analyze_anomaly` · `get_route_conditions` · `get_heat_map` · `get_wearable_data` · `create_notification` · `plan_hydration` · `get_environmental_news` · `get_air_quality` · `get_solar_climate` · `geocode_place` · `get_pollen` · `find_nearby_relief` · `get_google_weather` · `find_relief_within_reach` · `get_area_insights` · `get_elevation_profile` · `get_time_zone`
 
-All 20 are implemented in `:core-engine`. Tools whose Android integration isn't wired yet (route, heat map, wearable) return an explicit failure.
+All 24 are implemented in `:core-engine`. Tools whose Android integration isn't wired yet (route, heat map, wearable) return an explicit failure.
 
 ## 🛠️ Tech Stack
 

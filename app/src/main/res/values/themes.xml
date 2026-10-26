@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Edge-to-edge window: the map draws under transparent system bars. -->
+    <style name="Theme.Hydro" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F7FBFF</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

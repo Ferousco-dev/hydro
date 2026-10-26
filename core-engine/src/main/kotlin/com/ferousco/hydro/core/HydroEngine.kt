@@ -217,6 +217,14 @@ class HydroEngine(
                 com.ferousco.hydro.core.integration.UnavailablePlacesProvider,
             googleWeatherProvider: com.ferousco.hydro.core.integration.GoogleWeatherProvider =
                 com.ferousco.hydro.core.integration.UnavailableGoogleWeatherProvider,
+            isochroneProvider: com.ferousco.hydro.core.integration.IsochroneProvider =
+                com.ferousco.hydro.core.integration.UnavailableIsochroneProvider,
+            areaInsightsProvider: com.ferousco.hydro.core.integration.AreaInsightsProvider =
+                com.ferousco.hydro.core.integration.UnavailableAreaInsightsProvider,
+            elevationProvider: com.ferousco.hydro.core.integration.ElevationProvider =
+                com.ferousco.hydro.core.integration.UnavailableElevationProvider,
+            timeZoneProvider: com.ferousco.hydro.core.integration.TimeZoneProvider =
+                com.ferousco.hydro.core.integration.UnavailableTimeZoneProvider,
             clock: Clock = Clock.systemUTC(),
             logger: DiagnosticLogger = NoOpDiagnosticLogger
         ): HydroEngine {
@@ -269,6 +277,10 @@ class HydroEngine(
                 pollenProvider = pollenProvider,
                 placesProvider = placesProvider,
                 googleWeatherProvider = googleWeatherProvider,
+                isochroneProvider = isochroneProvider,
+                areaInsightsProvider = areaInsightsProvider,
+                elevationProvider = elevationProvider,
+                timeZoneProvider = timeZoneProvider,
                 clock = clock,
                 logger = logger
             )

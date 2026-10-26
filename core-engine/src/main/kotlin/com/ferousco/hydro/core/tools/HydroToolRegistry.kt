@@ -6,7 +6,15 @@ import com.ferousco.hydro.core.error.EngineResult
 import com.ferousco.hydro.core.history.EnvironmentalHistoryRepository
 import com.ferousco.hydro.core.integration.GreatCircleRoutingProvider
 import com.ferousco.hydro.core.integration.AirQualityProvider
+import com.ferousco.hydro.core.integration.AreaInsightsProvider
+import com.ferousco.hydro.core.integration.ElevationProvider
 import com.ferousco.hydro.core.integration.Geocoder
+import com.ferousco.hydro.core.integration.IsochroneProvider
+import com.ferousco.hydro.core.integration.TimeZoneProvider
+import com.ferousco.hydro.core.integration.UnavailableAreaInsightsProvider
+import com.ferousco.hydro.core.integration.UnavailableElevationProvider
+import com.ferousco.hydro.core.integration.UnavailableIsochroneProvider
+import com.ferousco.hydro.core.integration.UnavailableTimeZoneProvider
 import com.ferousco.hydro.core.integration.GoogleWeatherProvider
 import com.ferousco.hydro.core.integration.OpenMeteoGeocoder
 import com.ferousco.hydro.core.integration.PlacesProvider
@@ -317,6 +325,10 @@ class HydroToolRegistry(
             pollenProvider: PollenProvider = UnavailablePollenProvider,
             placesProvider: PlacesProvider = UnavailablePlacesProvider,
             googleWeatherProvider: GoogleWeatherProvider = UnavailableGoogleWeatherProvider,
+            isochroneProvider: IsochroneProvider = UnavailableIsochroneProvider,
+            areaInsightsProvider: AreaInsightsProvider = UnavailableAreaInsightsProvider,
+            elevationProvider: ElevationProvider = UnavailableElevationProvider,
+            timeZoneProvider: TimeZoneProvider = UnavailableTimeZoneProvider,
             clock: Clock = Clock.systemUTC(),
             logger: DiagnosticLogger = NoOpDiagnosticLogger
         ): HydroToolRegistry {
@@ -341,7 +353,11 @@ class HydroToolRegistry(
                     GeocodePlaceTool(geocoder),
                     GetPollenTool(pollenProvider),
                     FindNearbyReliefTool(placesProvider),
-                    GetGoogleWeatherTool(googleWeatherProvider)
+                    GetGoogleWeatherTool(googleWeatherProvider),
+                    FindReliefWithinReachTool(isochroneProvider, placesProvider),
+                    GetAreaInsightsTool(areaInsightsProvider),
+                    GetElevationProfileTool(elevationProvider),
+                    GetTimeZoneTool(timeZoneProvider, clock)
                 ),
                 logger = logger
             )

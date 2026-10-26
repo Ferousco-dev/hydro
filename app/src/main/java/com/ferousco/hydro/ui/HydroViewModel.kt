@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.ferousco.hydro.HydroApplication
 import com.ferousco.hydro.core.ai.HydroAssistantOutcome
 import com.ferousco.hydro.core.error.EngineResult
+import com.ferousco.hydro.core.json.JsonValue
+import com.ferousco.hydro.core.json.SafeJsonCodec
+import com.ferousco.hydro.core.tools.ToolCallOutcome
 import com.ferousco.hydro.core.model.ActivityCategory
 import java.time.Duration
 import java.time.format.DateTimeFormatter
@@ -62,6 +65,11 @@ data class HydroUiState(
     val recommendationError: String? = null,
     val assistantEnabled: Boolean = false,
     val isAsking: Boolean = false,
+    val mapLatitude: Double? = null,
+    val mapLongitude: Double? = null,
+    val isSearching: Boolean = false,
+    val searchError: String? = null,
+    val isCustomLocation: Boolean = false,
     val chat: List<ChatMessage> = emptyList()
 )
 
@@ -106,7 +114,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val deviceLocation = locationProvider.lastKnownLocation()
-            val location = deviceLocation ?: DEFAULT_LOCATION
+            val location = selectedLocation ?: deviceLocation ?: DEFAULT_LOCATION
 
             when (val result = engine.weatherRepository.getCurrentObservation(location)) {
                 is EngineResult.Failure -> {
@@ -114,7 +122,10 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                         it.copy(
                             isLoading = false,
                             locationLabel = location.label ?: "Selected location",
-                            usingDeviceLocation = deviceLocation != null,
+                            usingDeviceLocation = deviceLocation != null && selectedLocation == null,
+                            isCustomLocation = selectedLocation != null,
+                            mapLatitude = location.latitude,
+                            mapLongitude = location.longitude,
                             errorMessage = result.error.message
                         )
                     }
@@ -135,7 +146,10 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                             locationLabel = observation.effectiveLocation.label
                                 ?: location.label
                                 ?: "Selected location",
-                            usingDeviceLocation = deviceLocation != null,
+                            usingDeviceLocation = deviceLocation != null && selectedLocation == null,
+                            isCustomLocation = selectedLocation != null,
+                            mapLatitude = location.latitude,
+                            mapLongitude = location.longitude,
                             airTemperatureCelsius = observation.variables.airTemperature
                                 .inUnitOrNull(TemperatureUnit.CELSIUS),
                             feelsLikeCelsius = observation.variables.feelsLikeTemperature
@@ -179,6 +193,55 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private var lastLocation: GeoLocation = DEFAULT_LOCATION
+
+    /** A place the user searched for; overrides the device and default locations until cleared. */
+    private var selectedLocation: GeoLocation? = null
+
+    /** Resolves a place name with the `geocode_place` tool and loads conditions for the first match. */
+    fun search(query: String) {
+        val text = query.trim()
+        if (text.isEmpty() || _state.value.isSearching) return
+        _state.update { it.copy(isSearching = true, searchError = null) }
+        viewModelScope.launch {
+            val args = SafeJsonCodec.stringify(
+                JsonValue.ObjectValue(
+                    linkedMapOf(
+                        "query" to JsonValue.StringValue(text),
+                        "max_results" to JsonValue.NumberValue("1", 1.0)
+                    )
+                )
+            )
+            when (val outcome = engine.toolRegistry.executeJson("geocode_place", args)) {
+                is ToolCallOutcome.Failure ->
+                    _state.update { it.copy(isSearching = false, searchError = outcome.error.message) }
+                is ToolCallOutcome.Success -> {
+                    val match = outcome.jsonResult.getArray("matches")?.items?.firstOrNull() as? JsonValue.ObjectValue
+                    val lat = match?.getDouble("latitude")
+                    val lon = match?.getDouble("longitude")
+                    val resolved = if (match != null && lat != null && lon != null) {
+                        (GeoLocation.validated(lat, lon, label = match.getString("name")) as? EngineResult.Success)?.value
+                    } else {
+                        null
+                    }
+                    if (resolved == null) {
+                        _state.update { it.copy(isSearching = false, searchError = "No place matched \"$text\".") }
+                    } else {
+                        selectedLocation = resolved
+                        _state.update { it.copy(isSearching = false, searchError = null) }
+                        refresh()
+                    }
+                }
+            }
+        }
+    }
+
+    fun clearSearchError() = _state.update { it.copy(searchError = null) }
+
+    /** Drops any searched place and goes back to the device location (or the disclosed default). */
+    fun useMyLocation() {
+        selectedLocation = null
+        refresh()
+    }
     private var refreshQueued = false
 
     fun setActivity(activity: ActivityCategory) {
@@ -212,8 +275,12 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                             summary = r.summary,
                             actions = r.actions.map { it.title to it.detail },
                             bestWindow = r.bestWindow?.let {
-                                "${fmt.format(it.start)}–${fmt.format(it.end)} " +
-                                    "(peak ${it.peakCategory.displayName})"
+                                "${fmt.format(it.start)}–${fmt.format(it.end)}" +
+                                    if (it.peakCategory == com.ferousco.hydro.core.model.NwsHeatIndexCategory.BELOW_CAUTION_THRESHOLD) {
+                                        ""
+                                    } else {
+                                        " (peak ${it.peakCategory.displayName})"
+                                    }
                             },
                             limitations = r.limitations,
                             isCurrentData = r.isCurrentData

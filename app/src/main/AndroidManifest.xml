@@ -27,7 +27,8 @@
         android:name=".HydroApplication"
         android:allowBackup="false"
         android:label="Hydro"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Hydro">
 
         <!-- Used by the Maps SDK in the upcoming map screen. -->
         <meta-data

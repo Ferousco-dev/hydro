@@ -12,7 +12,7 @@ Put keys in `local.properties` at the repo root (gitignored) or export them as e
 | `TAVILY_API_KEY` | News tool | Optional | https://app.tavily.com |
 | `GOOGLE_MAPS_API_KEY` | Routes, geocoding, places, Google weather, air quality, pollen, map | Optional | https://console.cloud.google.com/google/maps-apis |
 
-Enable these APIs on the Google project: **Routes API, Geocoding API, Places API (New), Weather API, Air Quality API, Pollen API**, and later **Maps SDK for Android**. Restrict the key (Android package + SHA-1, and API restrictions) and set a billing cap.
+Enable these APIs on the Google project: **Routes API, Geocoding API, Places API (New), Weather API, Air Quality API, Pollen API, Isochrones API, Places Aggregate API, Maps Elevation API, Time Zone API**, and **Maps SDK for Android** for the map screen. Restrict the key (Android package + SHA-1, and API restrictions) and set a billing cap.
 
 Without a key, the matching feature reports "unavailable"; the rest keeps working. Open-Meteo, NASA POWER and the Open-Meteo geocoder need no key.
 

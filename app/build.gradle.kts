@@ -98,6 +98,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.health.connect.client)
+    implementation(libs.google.maps.compose)
+    implementation(libs.google.play.services.maps)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
