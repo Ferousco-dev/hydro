@@ -4,11 +4,38 @@ import com.ferousco.hydro.core.assessment.HeatAssessmentEngine
 import com.ferousco.hydro.core.error.EngineError
 import com.ferousco.hydro.core.error.EngineResult
 import com.ferousco.hydro.core.history.EnvironmentalHistoryRepository
+import com.ferousco.hydro.core.integration.GreatCircleRoutingProvider
+import com.ferousco.hydro.core.integration.AirQualityProvider
+import com.ferousco.hydro.core.integration.Geocoder
+import com.ferousco.hydro.core.integration.GoogleWeatherProvider
+import com.ferousco.hydro.core.integration.OpenMeteoGeocoder
+import com.ferousco.hydro.core.integration.PlacesProvider
+import com.ferousco.hydro.core.integration.PollenProvider
+import com.ferousco.hydro.core.integration.UnavailableGoogleWeatherProvider
+import com.ferousco.hydro.core.integration.UnavailablePlacesProvider
+import com.ferousco.hydro.core.integration.UnavailablePollenProvider
+import com.ferousco.hydro.core.integration.HeatMapProvider
+import com.ferousco.hydro.core.integration.NewsProvider
+import com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider
+import com.ferousco.hydro.core.integration.OpenMeteoAirQualityProvider
+import com.ferousco.hydro.core.integration.SolarClimateProvider
+import com.ferousco.hydro.core.integration.UnavailableNewsProvider
+import com.ferousco.hydro.core.integration.LocationSource
+import com.ferousco.hydro.core.integration.NotificationPolicy
+import com.ferousco.hydro.core.integration.NotificationSink
+import com.ferousco.hydro.core.integration.RoutingProvider
+import com.ferousco.hydro.core.integration.UnavailableHeatMapProvider
+import com.ferousco.hydro.core.integration.UnavailableLocationSource
+import com.ferousco.hydro.core.integration.UnavailableNotificationSink
+import com.ferousco.hydro.core.integration.UnavailableWearableDataSource
+import com.ferousco.hydro.core.integration.WearableDataSource
 import com.ferousco.hydro.core.json.JsonValue
 import com.ferousco.hydro.core.json.SafeJsonCodec
 import com.ferousco.hydro.core.logging.DiagnosticLogger
 import com.ferousco.hydro.core.logging.NoOpDiagnosticLogger
 import com.ferousco.hydro.core.planning.ActivityPlanningService
+import com.ferousco.hydro.core.preferences.InMemoryUserPreferencesStore
+import com.ferousco.hydro.core.preferences.UserPreferencesStore
 import com.ferousco.hydro.core.provider.WeatherRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
@@ -46,7 +73,7 @@ sealed interface ToolCallOutcome<out R> {
 }
 
 /**
- * Closed, policy-enforcing tool registry for future on-device AI orchestration.
+ * Closed, policy-enforcing tool registry for Gemini-driven orchestration.
  *
  * Security invariants:
  * - Only explicitly registered [HydroTool] instances can be invoked.
@@ -276,6 +303,20 @@ class HydroToolRegistry(
             assessmentEngine: HeatAssessmentEngine,
             planningService: ActivityPlanningService,
             historyRepository: EnvironmentalHistoryRepository,
+            locationSource: LocationSource = UnavailableLocationSource,
+            routingProvider: RoutingProvider = GreatCircleRoutingProvider(),
+            heatMapProvider: HeatMapProvider = UnavailableHeatMapProvider,
+            wearableDataSource: WearableDataSource = UnavailableWearableDataSource,
+            notificationSink: NotificationSink = UnavailableNotificationSink,
+            notificationPolicy: NotificationPolicy = NotificationPolicy(),
+            preferencesStore: UserPreferencesStore = InMemoryUserPreferencesStore(),
+            newsProvider: NewsProvider = UnavailableNewsProvider,
+            airQualityProvider: AirQualityProvider = OpenMeteoAirQualityProvider(),
+            solarClimateProvider: SolarClimateProvider = NasaPowerSolarClimateProvider(),
+            geocoder: Geocoder = OpenMeteoGeocoder(),
+            pollenProvider: PollenProvider = UnavailablePollenProvider,
+            placesProvider: PlacesProvider = UnavailablePlacesProvider,
+            googleWeatherProvider: GoogleWeatherProvider = UnavailableGoogleWeatherProvider,
             clock: Clock = Clock.systemUTC(),
             logger: DiagnosticLogger = NoOpDiagnosticLogger
         ): HydroToolRegistry {
@@ -286,7 +327,21 @@ class HydroToolRegistry(
                     GetHistoricalWeatherTool(weatherRepository, clock),
                     CalculateHeatAssessmentTool(assessmentEngine, clock),
                     CompareForecastPeriodsTool(weatherRepository, planningService),
-                    QueryLocalHistoryTool(historyRepository)
+                    QueryLocalHistoryTool(historyRepository, preferencesStore, clock),
+                    GetCurrentLocationTool(locationSource, clock),
+                    AnalyzeAnomalyTool(weatherRepository, historyRepository, clock),
+                    GetRouteConditionsTool(routingProvider, weatherRepository, assessmentEngine, clock),
+                    GetHeatMapTool(heatMapProvider, clock),
+                    GetWearableDataTool(wearableDataSource, clock),
+                    CreateNotificationTool(notificationSink, notificationPolicy, preferencesStore, clock),
+                    PlanHydrationTool(weatherRepository, assessmentEngine, clock),
+                    GetEnvironmentalNewsTool(newsProvider),
+                    GetAirQualityTool(airQualityProvider),
+                    GetSolarClimateTool(solarClimateProvider),
+                    GeocodePlaceTool(geocoder),
+                    GetPollenTool(pollenProvider),
+                    FindNearbyReliefTool(placesProvider),
+                    GetGoogleWeatherTool(googleWeatherProvider)
                 ),
                 logger = logger
             )

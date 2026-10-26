@@ -7,9 +7,32 @@ import com.ferousco.hydro.core.json.SafeJsonCodec
 import java.time.Duration
 
 enum class ToolCapability {
+    /** Read current observations, forecasts, and historical weather from a weather provider. */
     WEATHER_PROVIDER_READ,
+
+    /** Run Hydro's deterministic calculations (heat index, UV, planning, hydration). */
     DETERMINISTIC_ANALYSIS,
-    LOCAL_HISTORY_READ
+
+    /** Read Hydro's local environmental memory on the device. */
+    LOCAL_HISTORY_READ,
+
+    /** Read the device's current location fix. Never granted implicitly. */
+    LOCATION_READ,
+
+    /** Read route geometry/duration from a routing provider. */
+    ROUTING_READ,
+
+    /** Read geospatial heat-map layers. */
+    HEAT_MAP_READ,
+
+    /** Read supported wearable/Health Connect measurements. */
+    WEARABLE_READ,
+
+    /** Submit an alert to the Android notification layer. */
+    NOTIFICATION_WRITE,
+
+    /** Read third-party news, air-quality and satellite-climate data over the network. */
+    EXTERNAL_DATA_READ
 }
 
 /**

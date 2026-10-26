@@ -1,0 +1,628 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "454c792d59f7603bc49f8a840fb42970",
+    "entities": [
+      {
+        "tableName": "environmental_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `dataType` TEXT NOT NULL, `observationKind` TEXT, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `elevationMeters` REAL, `locationLabel` TEXT, `timeZoneId` TEXT NOT NULL, `providerId` TEXT NOT NULL, `providerName` TEXT NOT NULL, `endpointOrDataset` TEXT NOT NULL, `acquisitionMethod` TEXT NOT NULL, `modelInfo` TEXT, `license` TEXT NOT NULL, `attribution` TEXT NOT NULL, `gridLatitude` REAL, `gridLongitude` REAL, `gridElevationMeters` REAL, `validAtEpochMillis` INTEGER NOT NULL, `retrievedAtEpochMillis` INTEGER NOT NULL, `airTempAvailable` INTEGER NOT NULL, `airTempValue` REAL, `airTempUnit` TEXT, `airTempNature` TEXT, `airTempUnavailableReason` TEXT, `airTempUnavailableDetail` TEXT, `rhAvailable` INTEGER NOT NULL, `rhValue` REAL, `rhUnit` TEXT, `rhNature` TEXT, `rhUnavailableReason` TEXT, `rhUnavailableDetail` TEXT, `windAvailable` INTEGER NOT NULL, `windValue` REAL, `windUnit` TEXT, `windNature` TEXT, `windUnavailableReason` TEXT, `windUnavailableDetail` TEXT, `feelsLikeAvailable` INTEGER NOT NULL, `feelsLikeValue` REAL, `feelsLikeUnit` TEXT, `feelsLikeNature` TEXT, `feelsLikeUnavailableReason` TEXT, `feelsLikeUnavailableDetail` TEXT, `uvAvailable` INTEGER NOT NULL, `uvValue` REAL, `uvUnit` TEXT, `uvNature` TEXT, `uvUnavailableReason` TEXT, `uvUnavailableDetail` TEXT, `solarAvailable` INTEGER NOT NULL, `solarValue` REAL, `solarUnit` TEXT, `solarNature` TEXT, `solarUnavailableReason` TEXT, `solarUnavailableDetail` TEXT, `isDaylight` INTEGER, `wmoWeatherCode` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataType",
+            "columnName": "dataType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observationKind",
+            "columnName": "observationKind",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "elevationMeters",
+            "columnName": "elevationMeters",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationLabel",
+            "columnName": "locationLabel",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "timeZoneId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerId",
+            "columnName": "providerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "providerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endpointOrDataset",
+            "columnName": "endpointOrDataset",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "acquisitionMethod",
+            "columnName": "acquisitionMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelInfo",
+            "columnName": "modelInfo",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "license",
+            "columnName": "license",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attribution",
+            "columnName": "attribution",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gridLatitude",
+            "columnName": "gridLatitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "gridLongitude",
+            "columnName": "gridLongitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "gridElevationMeters",
+            "columnName": "gridElevationMeters",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "validAtEpochMillis",
+            "columnName": "validAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retrievedAtEpochMillis",
+            "columnName": "retrievedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "airTempAvailable",
+            "columnName": "airTempAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "airTempValue",
+            "columnName": "airTempValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "airTempUnit",
+            "columnName": "airTempUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "airTempNature",
+            "columnName": "airTempNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "airTempUnavailableReason",
+            "columnName": "airTempUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "airTempUnavailableDetail",
+            "columnName": "airTempUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rhAvailable",
+            "columnName": "rhAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rhValue",
+            "columnName": "rhValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "rhUnit",
+            "columnName": "rhUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rhNature",
+            "columnName": "rhNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rhUnavailableReason",
+            "columnName": "rhUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rhUnavailableDetail",
+            "columnName": "rhUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windAvailable",
+            "columnName": "windAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "windValue",
+            "columnName": "windValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "windUnit",
+            "columnName": "windUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windNature",
+            "columnName": "windNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windUnavailableReason",
+            "columnName": "windUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windUnavailableDetail",
+            "columnName": "windUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feelsLikeAvailable",
+            "columnName": "feelsLikeAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "feelsLikeValue",
+            "columnName": "feelsLikeValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "feelsLikeUnit",
+            "columnName": "feelsLikeUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feelsLikeNature",
+            "columnName": "feelsLikeNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feelsLikeUnavailableReason",
+            "columnName": "feelsLikeUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feelsLikeUnavailableDetail",
+            "columnName": "feelsLikeUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvAvailable",
+            "columnName": "uvAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uvValue",
+            "columnName": "uvValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "uvUnit",
+            "columnName": "uvUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvNature",
+            "columnName": "uvNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvUnavailableReason",
+            "columnName": "uvUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvUnavailableDetail",
+            "columnName": "uvUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "solarAvailable",
+            "columnName": "solarAvailable",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "solarValue",
+            "columnName": "solarValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "solarUnit",
+            "columnName": "solarUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "solarNature",
+            "columnName": "solarNature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "solarUnavailableReason",
+            "columnName": "solarUnavailableReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "solarUnavailableDetail",
+            "columnName": "solarUnavailableDetail",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isDaylight",
+            "columnName": "isDaylight",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "wmoWeatherCode",
+            "columnName": "wmoWeatherCode",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_environmental_records_dataType_validAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "dataType",
+              "validAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_environmental_records_dataType_validAtEpochMillis` ON `${TABLE_NAME}` (`dataType`, `validAtEpochMillis`)"
+          },
+          {
+            "name": "index_environmental_records_latitude_longitude_validAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "latitude",
+              "longitude",
+              "validAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_environmental_records_latitude_longitude_validAtEpochMillis` ON `${TABLE_NAME}` (`latitude`, `longitude`, `validAtEpochMillis`)"
+          },
+          {
+            "name": "index_environmental_records_retrievedAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "retrievedAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_environmental_records_retrievedAtEpochMillis` ON `${TABLE_NAME}` (`retrievedAtEpochMillis`)"
+          }
+        ]
+      },
+      {
+        "tableName": "heat_assessment_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `linkedEnvironmentalRecordId` TEXT, `sourceDataType` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `elevationMeters` REAL, `locationLabel` TEXT, `timeZoneId` TEXT NOT NULL, `providerId` TEXT NOT NULL, `providerName` TEXT NOT NULL, `endpointOrDataset` TEXT NOT NULL, `acquisitionMethod` TEXT NOT NULL, `modelInfo` TEXT, `license` TEXT NOT NULL, `attribution` TEXT NOT NULL, `validAtEpochMillis` INTEGER NOT NULL, `assessedAtEpochMillis` INTEGER NOT NULL, `retrievedAtEpochMillis` INTEGER NOT NULL, `methodId` TEXT NOT NULL, `methodVersion` TEXT NOT NULL, `completionStatus` TEXT NOT NULL, `category` TEXT, `uvCategory` TEXT, `heatIndexCelsius` REAL, `airTemperatureValue` REAL, `airTemperatureUnit` TEXT, `relativeHumidityPercent` REAL, `windSpeedValue` REAL, `windSpeedUnit` TEXT, `uvIndexValue` REAL, `solarRadiationWm2` REAL, `missingVariablesCsv` TEXT NOT NULL, `explanation` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedEnvironmentalRecordId",
+            "columnName": "linkedEnvironmentalRecordId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sourceDataType",
+            "columnName": "sourceDataType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "elevationMeters",
+            "columnName": "elevationMeters",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "locationLabel",
+            "columnName": "locationLabel",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeZoneId",
+            "columnName": "timeZoneId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerId",
+            "columnName": "providerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "providerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endpointOrDataset",
+            "columnName": "endpointOrDataset",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "acquisitionMethod",
+            "columnName": "acquisitionMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modelInfo",
+            "columnName": "modelInfo",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "license",
+            "columnName": "license",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attribution",
+            "columnName": "attribution",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validAtEpochMillis",
+            "columnName": "validAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assessedAtEpochMillis",
+            "columnName": "assessedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retrievedAtEpochMillis",
+            "columnName": "retrievedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "methodId",
+            "columnName": "methodId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "methodVersion",
+            "columnName": "methodVersion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completionStatus",
+            "columnName": "completionStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvCategory",
+            "columnName": "uvCategory",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "heatIndexCelsius",
+            "columnName": "heatIndexCelsius",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "airTemperatureValue",
+            "columnName": "airTemperatureValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "airTemperatureUnit",
+            "columnName": "airTemperatureUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "relativeHumidityPercent",
+            "columnName": "relativeHumidityPercent",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "windSpeedValue",
+            "columnName": "windSpeedValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "windSpeedUnit",
+            "columnName": "windSpeedUnit",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "uvIndexValue",
+            "columnName": "uvIndexValue",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "solarRadiationWm2",
+            "columnName": "solarRadiationWm2",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "missingVariablesCsv",
+            "columnName": "missingVariablesCsv",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "explanation",
+            "columnName": "explanation",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_heat_assessment_records_sourceDataType_validAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "sourceDataType",
+              "validAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_heat_assessment_records_sourceDataType_validAtEpochMillis` ON `${TABLE_NAME}` (`sourceDataType`, `validAtEpochMillis`)"
+          },
+          {
+            "name": "index_heat_assessment_records_linkedEnvironmentalRecordId",
+            "unique": false,
+            "columnNames": [
+              "linkedEnvironmentalRecordId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_heat_assessment_records_linkedEnvironmentalRecordId` ON `${TABLE_NAME}` (`linkedEnvironmentalRecordId`)"
+          },
+          {
+            "name": "index_heat_assessment_records_assessedAtEpochMillis",
+            "unique": false,
+            "columnNames": [
+              "assessedAtEpochMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_heat_assessment_records_assessedAtEpochMillis` ON `${TABLE_NAME}` (`assessedAtEpochMillis`)"
+          }
+        ]
+      },
+      {
+        "tableName": "user_preferences",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `payloadJson` TEXT NOT NULL, `schemaVersion` INTEGER NOT NULL, `updatedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schemaVersion",
+            "columnName": "schemaVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMillis",
+            "columnName": "updatedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '454c792d59f7603bc49f8a840fb42970')"
+    ]
+  }
+}

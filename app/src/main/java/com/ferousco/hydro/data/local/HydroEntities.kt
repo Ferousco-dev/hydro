@@ -118,3 +118,23 @@ data class HeatAssessmentEntity(
     val missingVariablesCsv: String,
     val explanation: String
 )
+
+/**
+ * Single-row table holding the user's JSON-encoded preferences.
+ *
+ * The payload is stored as versioned JSON rather than one column per field so a schema addition
+ * does not require a migration just to add a preference. [schemaVersion] is duplicated as a column
+ * so diagnostics can inspect the stored shape without decoding the payload.
+ */
+@Entity(tableName = "user_preferences")
+data class UserPreferencesEntity(
+    @PrimaryKey
+    val id: Int,
+    val payloadJson: String,
+    val schemaVersion: Int,
+    val updatedAtEpochMillis: Long
+) {
+    companion object {
+        const val SINGLETON_ROW_ID = 0
+    }
+}

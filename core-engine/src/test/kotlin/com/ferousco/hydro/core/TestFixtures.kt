@@ -23,6 +23,7 @@ import com.ferousco.hydro.core.model.UvIndexUnit
 import com.ferousco.hydro.core.model.ValueNature
 import com.ferousco.hydro.core.model.WeatherForecast
 import com.ferousco.hydro.core.provider.HttpGetRequest
+import com.ferousco.hydro.core.provider.HttpPostRequest
 import com.ferousco.hydro.core.provider.HttpTransport
 import com.ferousco.hydro.core.provider.RawHttpResponse
 import com.ferousco.hydro.core.provider.WeatherProvider
@@ -52,7 +53,9 @@ class MutableClock(
 
 class FakeHttpTransport : HttpTransport {
     val recordedRequests = mutableListOf<HttpGetRequest>()
+    val recordedPostRequests = mutableListOf<HttpPostRequest>()
     private val scripted = ArrayDeque<suspend (HttpGetRequest) -> EngineResult<RawHttpResponse>>()
+    private val scriptedPosts = ArrayDeque<suspend (HttpPostRequest) -> EngineResult<RawHttpResponse>>()
 
     fun enqueueSuccess(statusCode: Int = 200, body: String, headers: Map<String, List<String>> = emptyMap()) {
         scripted.addLast {
@@ -71,10 +74,27 @@ class FakeHttpTransport : HttpTransport {
         }
     }
 
+    fun enqueuePostSuccess(statusCode: Int = 200, body: String) {
+        scriptedPosts.addLast {
+            EngineResult.Success(RawHttpResponse(statusCode = statusCode, body = body))
+        }
+    }
+
+    fun enqueuePostFailure(error: EngineError) {
+        scriptedPosts.addLast { EngineResult.Failure(error) }
+    }
+
     override suspend fun get(request: HttpGetRequest, providerId: String): EngineResult<RawHttpResponse> {
         recordedRequests.add(request)
         val handler = scripted.removeFirstOrNull()
             ?: return EngineResult.Failure(EngineError.NetworkUnavailable("No scripted HTTP response remaining."))
+        return handler(request)
+    }
+
+    override suspend fun post(request: HttpPostRequest, providerId: String): EngineResult<RawHttpResponse> {
+        recordedPostRequests.add(request)
+        val handler = scriptedPosts.removeFirstOrNull()
+            ?: return EngineResult.Failure(EngineError.NetworkUnavailable("No scripted HTTP POST response remaining."))
         return handler(request)
     }
 }

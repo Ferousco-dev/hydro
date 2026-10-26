@@ -1,0 +1,456 @@
+kotlin version: 2.4.21
+error message: java.lang.RuntimeException: Exception while generating code for public final fun nasa power turns -999 sentinel into null and never zero-fills (): kotlin.Unit declared in com.ferousco.hydro.core.ExternalDataProvidersTest:
+FUN name:nasa power turns -999 sentinel into null and never zero-fills visibility:public modality:FINAL returnType:kotlin.Unit
+  VALUE_PARAMETER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest
+  annotations:
+    Test(expected = <null>, timeout = <null>)
+  BLOCK_BODY
+    RETURN type=kotlin.Nothing from='public final fun nasa power turns -999 sentinel into null and never zero-fills (): kotlin.Unit declared in com.ferousco.hydro.core.ExternalDataProvidersTest'
+      TYPE_OP type=kotlin.Unit origin=IMPLICIT_CAST typeOperand=kotlin.Unit
+        CALL 'public final fun runBlocking$default <T> (context: kotlin.coroutines.CoroutineContext?, block: @[ExtensionFunctionType] kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope, T of kotlinx.coroutines.BuildersKt.runBlocking$default>, $mask0: kotlin.Int, $handler: kotlin.Any?): T of kotlinx.coroutines.BuildersKt.runBlocking$default [companion] declared in kotlinx.coroutines.BuildersKt' type=T of kotlinx.coroutines.BuildersKt.runBlocking$default origin=DEFAULT_DISPATCH_CALL
+          TYPE_ARG T: kotlin.Unit
+          ARG context: COMPOSITE type=kotlin.coroutines.CoroutineContext? origin=DEFAULT_VALUE
+            CONST Null type=kotlin.coroutines.CoroutineContext? value=null
+          ARG block: BLOCK type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+            CLASS SUSPEND_LAMBDA CLASS name:<no name provided> modality:FINAL visibility:public/*package*/ superTypes:[kotlin.coroutines.jvm.internal.SuspendLambda; kotlin.jvm.functions.Function2<kotlinx.coroutines.CoroutineScope, kotlin.coroutines.Continuation<kotlin.Unit>?, kotlin.Any?>]
+              thisReceiver: VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+              FIELD name:label type:kotlin.Int visibility:public/*package*/
+              CONSTRUCTOR SUSPEND_LAMBDA visibility:public/*package*/ returnType:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> [primary]
+                VALUE_PARAMETER BOUND_RECEIVER_PARAMETER kind:Regular name:this$0 index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest
+                VALUE_PARAMETER kind:Regular name:$completion index:1 type:kotlin.coroutines.Continuation<com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>>?
+                BLOCK_BODY
+                  SET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=kotlin.Unit origin=INITIALIZER_OF_FIELD_FOR_CAPTURED_VALUE
+                    receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                    value: GET_VAR 'this$0: com.ferousco.hydro.core.ExternalDataProvidersTest declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.<init>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                  DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> (arity: kotlin.Int, $completion: kotlin.coroutines.Continuation<kotlin.Any?>?) declared in kotlin.coroutines.jvm.internal.SuspendLambda'
+                    ARG arity: CONST Int type=kotlin.Int value=2
+                    ARG $completion: GET_VAR '$completion: kotlin.coroutines.Continuation<com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>>? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.<init>' type=kotlin.coroutines.Continuation<com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>>? origin=null
+                  BLOCK type=kotlin.Unit origin=null
+              FUN name:invokeSuspend visibility:public modality:FINAL returnType:kotlin.Any?
+                VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+                VALUE_PARAMETER kind:Regular name:$result index:1 type:kotlin.Result<kotlin.Any?>
+                overridden:
+                  protected abstract fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in kotlin.coroutines.jvm.internal.SuspendLambda
+                BLOCK_BODY
+                  VAR name:transport type:com.ferousco.hydro.core.FakeHttpTransport [val]
+                    CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in com.ferousco.hydro.core.FakeHttpTransport' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+                  CALL 'public final fun enqueueSuccess$default ($this: com.ferousco.hydro.core.FakeHttpTransport, statusCode: kotlin.Int, body: kotlin.String, headers: kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in com.ferousco.hydro.core.FakeHttpTransport' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    ARG $this: GET_VAR 'val transport: com.ferousco.hydro.core.FakeHttpTransport [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+                    ARG statusCode: COMPOSITE type=kotlin.Int origin=DEFAULT_VALUE
+                      CONST Int type=kotlin.Int value=0
+                    ARG body: CONST String type=kotlin.String value="{\"properties\":{\"parameter\":{\n              \"ALLSKY_SFC_SW_DWN\":{\"20261022\":5.1,\"20261023\":-999.0},\n              \"T2M_MAX\":{\"20261022\":33.0,\"20261023\":34.5},\n              \"T2M_MIN\":{\"20261022\":23.0,\"20261023\":-999.0},\n              \"RH2M\":{\"20261022\":70.0,\"20261023\":68.0},\n              \"PRECTOTCORR\":{\"20261022\":0.0,\"20261023\":2.5}}}}"
+                    ARG headers: COMPOSITE type=kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=5
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+                  VAR name:series type:com.ferousco.hydro.core.integration.SolarClimateSeries [val]
+                    CALL 'public final fun <get-value> (): T of com.ferousco.hydro.core.error.EngineResult.Success declared in com.ferousco.hydro.core.error.EngineResult.Success' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=GET_PROPERTY
+                      ARG <this>: BLOCK type=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries> origin=null
+                        VAR IR_TEMPORARY_VARIABLE name:tmp1 type:kotlin.Any? [val]
+                          CALL 'public open fun recent (location: com.ferousco.hydro.core.model.GeoLocation, days: kotlin.Int, $completion: kotlin.coroutines.Continuation<com.ferousco.hydro.core.error.EngineResult<com.ferousco.hydro.core.integration.SolarClimateSeries>>): kotlin.Any? [suspend] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.error.EngineResult<com.ferousco.hydro.core.integration.SolarClimateSeries> origin=null
+                            ARG <this>: CONSTRUCTOR_CALL 'public constructor <init> (transport: com.ferousco.hydro.core.provider.HttpTransport, clock: java.time.Clock) [primary] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider origin=null
+                              ARG transport: GET_VAR 'val transport: com.ferousco.hydro.core.FakeHttpTransport [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+                              ARG clock: BLOCK type=java.time.Clock origin=null
+                                VAR IR_TEMPORARY_VARIABLE name:tmp0 type:kotlin.Any? [val]
+                                  CALL 'public final fun access$getClock$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): @[FlexibleNullability] java.time.Clock? [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=@[FlexibleNullability] java.time.Clock? origin=null
+                                    ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                                      receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                                CALL 'public final fun checkNotNullExpressionValue (value: kotlin.Any?, expression: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+                                  ARG value: GET_VAR 'val tmp0: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                                  ARG expression: CONST String type=kotlin.String value="access$getClock$p(...)"
+                                GET_VAR 'val tmp0: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                            ARG location: CALL 'public final fun access$getIbadan$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): com.ferousco.hydro.core.model.GeoLocation [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=com.ferousco.hydro.core.model.GeoLocation origin=null
+                              ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                                receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                            ARG days: CONST Int type=kotlin.Int value=2
+                            ARG $completion: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                        CALL 'public final fun checkNotNull (object: kotlin.Any?, message: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+                          ARG object: GET_VAR 'val tmp1: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                          ARG message: CONST String type=kotlin.String value="null cannot be cast to non-null type com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>"
+                        TYPE_OP type=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>? origin=CAST typeOperand=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>?
+                          GET_VAR 'val tmp1: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                  CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    TYPE_ARG T: kotlin.Int
+                    ARG expected: CONST Int type=kotlin.Int value=2
+                    ARG actual: CALL 'public abstract fun <get-size> (): kotlin.Int declared in kotlin.collections.List' type=kotlin.Int origin=GET_PROPERTY
+                      ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+                        ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+                    ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.String? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=4
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+                  CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    TYPE_ARG T: kotlin.Double?
+                    ARG expected: CONST Double type=kotlin.Double value=5.1
+                    ARG actual: CALL 'public final fun <get-solarKwhPerM2> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+                      ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+                        ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+                          ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+                        ARG index: CONST Int type=kotlin.Int value=0
+                    ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.String? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=4
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+                  CALL 'public final fun assertNull$default (actual: kotlin.Any?, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    ARG actual: CALL 'public final fun <get-solarKwhPerM2> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+                      ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+                        ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+                          ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+                        ARG index: CONST Int type=kotlin.Int value=1
+                    ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.String? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=2
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+                  CALL 'public final fun assertNull$default (actual: kotlin.Any?, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    ARG actual: CALL 'public final fun <get-minTemperatureCelsius> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+                      ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+                        ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+                          ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+                        ARG index: CONST Int type=kotlin.Int value=1
+                    ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.String? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=2
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+                  CALL 'public final fun assertEquals <T> (expected: T of kotlin.test.AssertionsKt.assertEquals, actual: T of kotlin.test.AssertionsKt.assertEquals, message: kotlin.String?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=null
+                    TYPE_ARG T: kotlin.Double?
+                    ARG expected: CONST Double type=kotlin.Double value=0.0
+                    ARG actual: CALL 'public final fun <get-rainfallMm> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+                      ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+                        ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+                          ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+                        ARG index: CONST Int type=kotlin.Int value=0
+                    ARG message: CONST String type=kotlin.String value="a real 0 mm rainfall must stay 0, not become null"
+                  VAR name:tool type:com.ferousco.hydro.core.tools.GetSolarClimateTool [val]
+                    CONSTRUCTOR_CALL 'public constructor <init> (provider: com.ferousco.hydro.core.integration.SolarClimateProvider) [primary] declared in com.ferousco.hydro.core.tools.GetSolarClimateTool' type=com.ferousco.hydro.core.tools.GetSolarClimateTool origin=null
+                      ARG provider: CONSTRUCTOR_CALL 'public constructor <init> (transport: com.ferousco.hydro.core.provider.HttpTransport, clock: java.time.Clock) [primary] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider origin=null
+                        ARG transport: CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in com.ferousco.hydro.core.FakeHttpTransport' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+                        ARG clock: BLOCK type=java.time.Clock origin=null
+                          VAR IR_TEMPORARY_VARIABLE name:tmp2 type:kotlin.Any? [val]
+                            CALL 'public final fun access$getClock$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): @[FlexibleNullability] java.time.Clock? [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=@[FlexibleNullability] java.time.Clock? origin=null
+                              ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                                receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                          CALL 'public final fun checkNotNullExpressionValue (value: kotlin.Any?, expression: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+                            ARG value: GET_VAR 'val tmp2: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                            ARG expression: CONST String type=kotlin.String value="access$getClock$p(...)"
+                          GET_VAR 'val tmp2: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                  CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+                    TYPE_ARG T: kotlin.String
+                    ARG expected: CONST String type=kotlin.String value="get_solar_climate"
+                    ARG actual: CALL 'public final fun <get-name> (): kotlin.String declared in com.ferousco.hydro.core.tools.ToolDescriptor' type=kotlin.String origin=GET_PROPERTY
+                      ARG <this>: CALL 'public open fun <get-descriptor> (): com.ferousco.hydro.core.tools.ToolDescriptor declared in com.ferousco.hydro.core.tools.GetSolarClimateTool' type=com.ferousco.hydro.core.tools.ToolDescriptor origin=GET_PROPERTY
+                        ARG <this>: GET_VAR 'val tool: com.ferousco.hydro.core.tools.GetSolarClimateTool [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.tools.GetSolarClimateTool origin=null
+                    ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+                      CONST Null type=kotlin.String? value=null
+                    ARG $mask0: CONST Int type=kotlin.Int value=4
+                    ARG $handler: CONST Null type=kotlin.Any? value=null
+              FUN name:create visibility:public modality:FINAL returnType:kotlin.coroutines.Continuation<kotlin.Unit>
+                VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+                VALUE_PARAMETER kind:Regular name:value index:1 type:kotlin.Any?
+                VALUE_PARAMETER kind:Regular name:$completion index:2 type:kotlin.coroutines.Continuation<kotlin.Nothing>
+                overridden:
+                  public open fun create (value: kotlin.Any?, $completion: kotlin.coroutines.Continuation<kotlin.Nothing>): kotlin.coroutines.Continuation<kotlin.Unit> declared in kotlin.coroutines.jvm.internal.SuspendLambda
+                BLOCK_BODY
+                  RETURN type=kotlin.Nothing from='public final fun create (value: kotlin.Any?, $completion: kotlin.coroutines.Continuation<kotlin.Nothing>): kotlin.coroutines.Continuation<kotlin.Unit> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>'
+                    CONSTRUCTOR_CALL 'public/*package*/ constructor <init> (this$0: com.ferousco.hydro.core.ExternalDataProvidersTest, $completion: kotlin.coroutines.Continuation<com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>>?) [primary] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                      ARG this$0: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                        receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.create' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                      ARG $completion: GET_VAR '$completion: kotlin.coroutines.Continuation<kotlin.Nothing> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.create' type=kotlin.coroutines.Continuation<kotlin.Nothing> origin=null
+              FUN name:invoke visibility:public modality:FINAL returnType:kotlin.Any?
+                VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+                VALUE_PARAMETER kind:Regular name:p1 index:1 type:kotlinx.coroutines.CoroutineScope
+                VALUE_PARAMETER kind:Regular name:p2 index:2 type:kotlin.coroutines.Continuation<kotlin.Unit>?
+                overridden:
+                  public abstract fun invoke (p1: P1 of kotlin.jvm.functions.Function2, p2: P2 of kotlin.jvm.functions.Function2): R of kotlin.jvm.functions.Function2 declared in kotlin.jvm.functions.Function2
+                BLOCK_BODY
+                  RETURN type=kotlin.Nothing from='public final fun invoke (p1: kotlinx.coroutines.CoroutineScope, p2: kotlin.coroutines.Continuation<kotlin.Unit>?): kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>'
+                    CALL 'public final fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=kotlin.Any? origin=null
+                      ARG <this>: TYPE_OP type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=IMPLICIT_CAST typeOperand=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+                        CALL 'public final fun create (value: kotlin.Any?, $completion: kotlin.coroutines.Continuation<kotlin.Nothing>): kotlin.coroutines.Continuation<kotlin.Unit> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=kotlin.coroutines.Continuation<kotlin.Unit> origin=null
+                          ARG <this>: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                          ARG value: GET_VAR 'p1: kotlinx.coroutines.CoroutineScope declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=kotlinx.coroutines.CoroutineScope origin=null
+                          ARG $completion: GET_VAR 'p2: kotlin.coroutines.Continuation<kotlin.Unit>? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=kotlin.coroutines.Continuation<kotlin.Unit>? origin=null
+                      ARG $result: CALL 'public final fun <unsafe-coerce> <T, R> (v: T of kotlin.jvm.internal.<unsafe-coerce>): R of kotlin.jvm.internal.<unsafe-coerce> declared in kotlin.jvm.internal' type=kotlin.Result<kotlin.Any?> origin=null
+                        TYPE_ARG T: kotlin.Any?
+                        TYPE_ARG R: kotlin.Result<kotlin.Any?>
+                        ARG v: GET_FIELD 'FIELD FIELD_FOR_OBJECT_INSTANCE name:INSTANCE type:kotlin.Unit visibility:public [final,static] declared in kotlin.Unit' type=kotlin.Unit origin=null
+              FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final]
+              FUN BRIDGE name:invoke visibility:public modality:OPEN returnType:kotlin.Any?
+                VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+                VALUE_PARAMETER kind:Regular name:p1 index:1 type:kotlin.Any?
+                VALUE_PARAMETER kind:Regular name:p2 index:2 type:kotlin.Any?
+                EXPRESSION_BODY
+                  RETURN type=kotlin.Nothing from='public open fun invoke (p1: kotlin.Any?, p2: kotlin.Any?): kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>'
+                    CALL 'public final fun invoke (p1: kotlinx.coroutines.CoroutineScope, p2: kotlin.coroutines.Continuation<kotlin.Unit>?): kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=kotlin.Any? origin=BRIDGE_DELEGATION
+                      ARG <this>: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                      ARG p1: TYPE_OP type=kotlinx.coroutines.CoroutineScope origin=IMPLICIT_CAST typeOperand=kotlinx.coroutines.CoroutineScope
+                        GET_VAR 'p1: kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=kotlin.Any? origin=null
+                      ARG p2: TYPE_OP type=kotlin.coroutines.Continuation<*> origin=IMPLICIT_CAST typeOperand=kotlin.coroutines.Continuation<*>
+                        GET_VAR 'p2: kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invoke' type=kotlin.Any? origin=null
+            CONSTRUCTOR_CALL 'public/*package*/ constructor <init> (this$0: com.ferousco.hydro.core.ExternalDataProvidersTest, $completion: kotlin.coroutines.Continuation<com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>>?) [primary] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+              ARG this$0: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+              ARG $completion: CONST Null type=kotlin.Nothing? value=null
+          ARG $mask0: CONST Int type=kotlin.Int value=1
+          ARG $handler: CONST Null type=kotlin.Any? value=null
+
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:58)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate$default(FunctionCodegen.kt:51)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethodNode(ClassCodegen.kt:441)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:458)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:168)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.generateFile(JvmIrCodegenFactory.kt:220)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:186)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.runCodegen(JvmBackendPipelinePhase.kt:161)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:108)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:39)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:60)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:50)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
+	at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:134)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact(AbstractCliPipeline.kt:88)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact$default(AbstractCliPipeline.kt:48)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:39)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:30)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:21)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:146)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:222)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:53)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:610)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:521)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:366)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:169)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:792)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:101)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:2077)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:351)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:166)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:543)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:744)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:623)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+Caused by: java.lang.RuntimeException: Exception while generating code for public final fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>:
+FUN name:invokeSuspend visibility:public modality:FINAL returnType:kotlin.Any?
+  VALUE_PARAMETER INSTANCE_RECEIVER kind:DispatchReceiver name:<this> index:0 type:com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>
+  VALUE_PARAMETER kind:Regular name:$result index:1 type:kotlin.Result<kotlin.Any?>
+  overridden:
+    protected abstract fun invokeSuspend ($result: kotlin.Result<kotlin.Any?>): kotlin.Any? declared in kotlin.coroutines.jvm.internal.SuspendLambda
+  BLOCK_BODY
+    VAR name:transport type:com.ferousco.hydro.core.FakeHttpTransport [val]
+      CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in com.ferousco.hydro.core.FakeHttpTransport' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+    CALL 'public final fun enqueueSuccess$default ($this: com.ferousco.hydro.core.FakeHttpTransport, statusCode: kotlin.Int, body: kotlin.String, headers: kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in com.ferousco.hydro.core.FakeHttpTransport' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      ARG $this: GET_VAR 'val transport: com.ferousco.hydro.core.FakeHttpTransport [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+      ARG statusCode: COMPOSITE type=kotlin.Int origin=DEFAULT_VALUE
+        CONST Int type=kotlin.Int value=0
+      ARG body: CONST String type=kotlin.String value="{\"properties\":{\"parameter\":{\n              \"ALLSKY_SFC_SW_DWN\":{\"20261022\":5.1,\"20261023\":-999.0},\n              \"T2M_MAX\":{\"20261022\":33.0,\"20261023\":34.5},\n              \"T2M_MIN\":{\"20261022\":23.0,\"20261023\":-999.0},\n              \"RH2M\":{\"20261022\":70.0,\"20261023\":68.0},\n              \"PRECTOTCORR\":{\"20261022\":0.0,\"20261023\":2.5}}}}"
+      ARG headers: COMPOSITE type=kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.collections.Map<kotlin.String, kotlin.collections.List<kotlin.String>>? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=5
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+    VAR name:series type:com.ferousco.hydro.core.integration.SolarClimateSeries [val]
+      CALL 'public final fun <get-value> (): T of com.ferousco.hydro.core.error.EngineResult.Success declared in com.ferousco.hydro.core.error.EngineResult.Success' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=GET_PROPERTY
+        ARG <this>: BLOCK type=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries> origin=null
+          VAR IR_TEMPORARY_VARIABLE name:tmp1 type:kotlin.Any? [val]
+            CALL 'public open fun recent (location: com.ferousco.hydro.core.model.GeoLocation, days: kotlin.Int, $completion: kotlin.coroutines.Continuation<com.ferousco.hydro.core.error.EngineResult<com.ferousco.hydro.core.integration.SolarClimateSeries>>): kotlin.Any? [suspend] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.error.EngineResult<com.ferousco.hydro.core.integration.SolarClimateSeries> origin=null
+              ARG <this>: CONSTRUCTOR_CALL 'public constructor <init> (transport: com.ferousco.hydro.core.provider.HttpTransport, clock: java.time.Clock) [primary] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider origin=null
+                ARG transport: GET_VAR 'val transport: com.ferousco.hydro.core.FakeHttpTransport [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+                ARG clock: BLOCK type=java.time.Clock origin=null
+                  VAR IR_TEMPORARY_VARIABLE name:tmp0 type:kotlin.Any? [val]
+                    CALL 'public final fun access$getClock$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): @[FlexibleNullability] java.time.Clock? [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=@[FlexibleNullability] java.time.Clock? origin=null
+                      ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                        receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+                  CALL 'public final fun checkNotNullExpressionValue (value: kotlin.Any?, expression: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+                    ARG value: GET_VAR 'val tmp0: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+                    ARG expression: CONST String type=kotlin.String value="access$getClock$p(...)"
+                  GET_VAR 'val tmp0: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+              ARG location: CALL 'public final fun access$getIbadan$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): com.ferousco.hydro.core.model.GeoLocation [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=com.ferousco.hydro.core.model.GeoLocation origin=null
+                ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                  receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+              ARG days: CONST Int type=kotlin.Int value=2
+              ARG $completion: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+          CALL 'public final fun checkNotNull (object: kotlin.Any?, message: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+            ARG object: GET_VAR 'val tmp1: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+            ARG message: CONST String type=kotlin.String value="null cannot be cast to non-null type com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>"
+          TYPE_OP type=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>? origin=CAST typeOperand=com.ferousco.hydro.core.error.EngineResult.Success<com.ferousco.hydro.core.integration.SolarClimateSeries>?
+            GET_VAR 'val tmp1: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+    CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      TYPE_ARG T: kotlin.Int
+      ARG expected: CONST Int type=kotlin.Int value=2
+      ARG actual: CALL 'public abstract fun <get-size> (): kotlin.Int declared in kotlin.collections.List' type=kotlin.Int origin=GET_PROPERTY
+        ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+          ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+      ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.String? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=4
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+    CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      TYPE_ARG T: kotlin.Double?
+      ARG expected: CONST Double type=kotlin.Double value=5.1
+      ARG actual: CALL 'public final fun <get-solarKwhPerM2> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+        ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+          ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+            ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+          ARG index: CONST Int type=kotlin.Int value=0
+      ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.String? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=4
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+    CALL 'public final fun assertNull$default (actual: kotlin.Any?, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      ARG actual: CALL 'public final fun <get-solarKwhPerM2> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+        ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+          ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+            ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+          ARG index: CONST Int type=kotlin.Int value=1
+      ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.String? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=2
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+    CALL 'public final fun assertNull$default (actual: kotlin.Any?, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      ARG actual: CALL 'public final fun <get-minTemperatureCelsius> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+        ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+          ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+            ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+          ARG index: CONST Int type=kotlin.Int value=1
+      ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.String? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=2
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+    CALL 'public final fun assertEquals <T> (expected: T of kotlin.test.AssertionsKt.assertEquals, actual: T of kotlin.test.AssertionsKt.assertEquals, message: kotlin.String?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=null
+      TYPE_ARG T: kotlin.Double?
+      ARG expected: CONST Double type=kotlin.Double value=0.0
+      ARG actual: CALL 'public final fun <get-rainfallMm> (): kotlin.Double? declared in com.ferousco.hydro.core.integration.SolarClimateDay' type=kotlin.Double? origin=GET_PROPERTY
+        ARG <this>: CALL 'public abstract fun get (index: kotlin.Int): E of kotlin.collections.List [operator] declared in kotlin.collections.List' type=com.ferousco.hydro.core.integration.SolarClimateDay origin=GET_ARRAY_ELEMENT
+          ARG <this>: CALL 'public final fun <get-days> (): kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> declared in com.ferousco.hydro.core.integration.SolarClimateSeries' type=kotlin.collections.List<com.ferousco.hydro.core.integration.SolarClimateDay> origin=GET_PROPERTY
+            ARG <this>: GET_VAR 'val series: com.ferousco.hydro.core.integration.SolarClimateSeries [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.integration.SolarClimateSeries origin=null
+          ARG index: CONST Int type=kotlin.Int value=0
+      ARG message: CONST String type=kotlin.String value="a real 0 mm rainfall must stay 0, not become null"
+    VAR name:tool type:com.ferousco.hydro.core.tools.GetSolarClimateTool [val]
+      CONSTRUCTOR_CALL 'public constructor <init> (provider: com.ferousco.hydro.core.integration.SolarClimateProvider) [primary] declared in com.ferousco.hydro.core.tools.GetSolarClimateTool' type=com.ferousco.hydro.core.tools.GetSolarClimateTool origin=null
+        ARG provider: CONSTRUCTOR_CALL 'public constructor <init> (transport: com.ferousco.hydro.core.provider.HttpTransport, clock: java.time.Clock) [primary] declared in com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider' type=com.ferousco.hydro.core.integration.NasaPowerSolarClimateProvider origin=null
+          ARG transport: CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in com.ferousco.hydro.core.FakeHttpTransport' type=com.ferousco.hydro.core.FakeHttpTransport origin=null
+          ARG clock: BLOCK type=java.time.Clock origin=null
+            VAR IR_TEMPORARY_VARIABLE name:tmp2 type:kotlin.Any? [val]
+              CALL 'public final fun access$getClock$p ($this: com.ferousco.hydro.core.ExternalDataProvidersTest): @[FlexibleNullability] java.time.Clock? [companion] declared in com.ferousco.hydro.core.ExternalDataProvidersTest' type=@[FlexibleNullability] java.time.Clock? origin=null
+                ARG $this: GET_FIELD 'FIELD FIELD_FOR_CAPTURED_VALUE name:this$0 type:com.ferousco.hydro.core.ExternalDataProvidersTest visibility:public/*package*/ [final] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>' type=com.ferousco.hydro.core.ExternalDataProvidersTest origin=null
+                  receiver: GET_VAR '<this>: com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided> origin=null
+            CALL 'public final fun checkNotNullExpressionValue (value: kotlin.Any?, expression: kotlin.String): kotlin.Unit [companion] declared in kotlin.jvm.internal.Intrinsics' type=kotlin.Unit origin=null
+              ARG value: GET_VAR 'val tmp2: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+              ARG expression: CONST String type=kotlin.String value="access$getClock$p(...)"
+            GET_VAR 'val tmp2: kotlin.Any? [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=kotlin.Any? origin=null
+    CALL 'public final fun assertEquals$default <T> (expected: T of kotlin.test.AssertionsKt.assertEquals$default, actual: T of kotlin.test.AssertionsKt.assertEquals$default, message: kotlin.String?, $mask0: kotlin.Int, $handler: kotlin.Any?): kotlin.Unit [companion] declared in kotlin.test.AssertionsKt' type=kotlin.Unit origin=DEFAULT_DISPATCH_CALL
+      TYPE_ARG T: kotlin.String
+      ARG expected: CONST String type=kotlin.String value="get_solar_climate"
+      ARG actual: CALL 'public final fun <get-name> (): kotlin.String declared in com.ferousco.hydro.core.tools.ToolDescriptor' type=kotlin.String origin=GET_PROPERTY
+        ARG <this>: CALL 'public open fun <get-descriptor> (): com.ferousco.hydro.core.tools.ToolDescriptor declared in com.ferousco.hydro.core.tools.GetSolarClimateTool' type=com.ferousco.hydro.core.tools.ToolDescriptor origin=GET_PROPERTY
+          ARG <this>: GET_VAR 'val tool: com.ferousco.hydro.core.tools.GetSolarClimateTool [val] declared in com.ferousco.hydro.core.ExternalDataProvidersTest.nasa power turns -999 sentinel into null and never zero-fills.<no name provided>.invokeSuspend' type=com.ferousco.hydro.core.tools.GetSolarClimateTool origin=null
+      ARG message: COMPOSITE type=kotlin.String? origin=DEFAULT_VALUE
+        CONST Null type=kotlin.String? value=null
+      ARG $mask0: CONST Int type=kotlin.Int value=4
+      ARG $handler: CONST Null type=kotlin.Any? value=null
+
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:58)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate$default(FunctionCodegen.kt:51)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethodNode(ClassCodegen.kt:441)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:458)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:168)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitClass(ExpressionCodegen.kt:950)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitClass(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.declarations.IrClass.accept(IrClass.kt:72)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:484)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitContainerExpression(ExpressionCodegen.kt:498)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitContainerExpression(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.visitors.IrVisitor.visitBlock(IrVisitor.kt:125)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlock(ExpressionCodegen.kt:424)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlock(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.gen(ExpressionCodegen.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrCallGenerator.genValueAndPut(IrCallGenerator.kt:48)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitCall$handleParameter(ExpressionCodegen.kt:527)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitCall(ExpressionCodegen.kt:540)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitCall(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitTypeOperator(ExpressionCodegen.kt:1073)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitTypeOperator(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall.accept(IrTypeOperatorCall.kt:26)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitReturn(ExpressionCodegen.kt:998)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitReturn(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrReturn.accept(IrReturn.kt:24)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:484)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:489)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.generate(ExpressionCodegen.kt:231)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.doGenerate(FunctionCodegen.kt:135)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:55)
+	... 40 more
+Caused by: java.io.FileNotFoundException: /Users/oresajooluwaferanmiidunuoluwa/Desktop/HACKATHON/Hydro/core-engine/build/classes/kotlin/main/com/ferousco/hydro/core/tools/GetSolarClimateParams.class (No such file or directory)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(FileInputStream.java:185)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:139)
+	at org.jetbrains.kotlin.com.intellij.openapi.util.io.FileUtil.loadFileBytes(FileUtil.java:188)
+	at org.jetbrains.kotlin.cli.common.localfs.KotlinLocalVirtualFile.contentsToByteArray(KotlinLocalVirtualFile.kt:108)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinCliJavaFileManagerImpl.findClass(KotlinCliJavaFileManagerImpl.kt:148)
+	at org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade$CliFinder.findClass(KotlinJavaPsiFacade.java:538)
+	at org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade.findClass(KotlinJavaPsiFacade.java:181)
+	at org.jetbrains.kotlin.load.java.JavaClassFinderImpl.findClass(JavaClassFinderImpl.kt:46)
+	at org.jetbrains.kotlin.fir.java.FirJavaFacade.findClass(FirJavaFacade.kt:74)
+	at org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider.extractClassMetadata(JvmClassFileBasedSymbolProvider.kt:180)
+	at org.jetbrains.kotlin.fir.deserialization.AbstractFirDeserializedSymbolProvider.findAndDeserializeClass(AbstractFirDeserializedSymbolProvider.kt:282)
+	at org.jetbrains.kotlin.fir.deserialization.AbstractFirDeserializedSymbolProvider.classCache$lambda$0(AbstractFirDeserializedSymbolProvider.kt:184)
+	at org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCacheWithPostCompute.getValue(FirThreadUnsafeCachesFactory.kt:74)
+	at org.jetbrains.kotlin.fir.deserialization.AbstractFirDeserializedSymbolProvider.getClass(AbstractFirDeserializedSymbolProvider.kt:376)
+	at org.jetbrains.kotlin.fir.deserialization.AbstractFirDeserializedSymbolProvider.getClass$default(AbstractFirDeserializedSymbolProvider.kt:359)
+	at org.jetbrains.kotlin.fir.deserialization.AbstractFirDeserializedSymbolProvider.getClassLikeSymbolByClassId(AbstractFirDeserializedSymbolProvider.kt:453)
+	at org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider.computeClass(FirCachingCompositeSymbolProvider.kt:147)
+	at org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider.access$computeClass(FirCachingCompositeSymbolProvider.kt:27)
+	at org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider$special$$inlined$createCache$1.invoke(FirCachesFactory.kt:157)
+	at org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider$special$$inlined$createCache$1.invoke(FirCachesFactory.kt:141)
+	at org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCache.getValue(FirThreadUnsafeCachesFactory.kt:53)
+	at org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider.getClassLikeSymbolByClassId(FirCachingCompositeSymbolProvider.kt:174)
+	at org.jetbrains.kotlin.fir.resolve.ToSymbolUtilsKt.toSymbol(ToSymbolUtils.kt:76)
+	at org.jetbrains.kotlin.fir.resolve.ToSymbolUtilsKt.toTypeAliasSymbol(ToSymbolUtils.kt:120)
+	at org.jetbrains.kotlin.fir.resolve.TypeExpansionUtilsKt.directExpansionType(TypeExpansionUtils.kt:175)
+	at org.jetbrains.kotlin.fir.resolve.TypeExpansionUtilsKt.fullyExpandedTypeNoCache(TypeExpansionUtils.kt:162)
+	at org.jetbrains.kotlin.fir.resolve.TypeExpansionUtilsKt.fullyExpandedType(TypeExpansionUtils.kt:54)
+	at org.jetbrains.kotlin.fir.resolve.TypeExpansionUtilsKt.fullyExpandedType(TypeExpansionUtils.kt:64)
+	at org.jetbrains.kotlin.fir.types.ConeInferenceContext.typeDepth(ConeInferenceContext.kt:213)
+	at org.jetbrains.kotlin.fir.types.ConeInferenceContext.typeDepth(ConeInferenceContext.kt:195)
+	at org.jetbrains.kotlin.fir.types.ConeInferenceContext.typeDepth(ConeInferenceContext.kt:223)
+	at org.jetbrains.kotlin.fir.types.ConeInferenceContext.typeDepth(ConeInferenceContext.kt:195)
+	at org.jetbrains.kotlin.fir.types.ConeInferenceContext.typeDepthForApproximation(ConeInferenceContext.kt:205)
+	at org.jetbrains.kotlin.types.AbstractTypeApproximator.typeDepthForApproximation(AbstractTypeApproximator.kt)
+	at org.jetbrains.kotlin.types.AbstractTypeApproximator.approximateToSuperType(AbstractTypeApproximator.kt:1076)
+	at org.jetbrains.kotlin.fir.types.ConeTypeApproximator.approximateToSuperType(ConeTypeApproximator.kt:19)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverterKt.approximateForIrOrNull(Fir2IrTypeConverter.kt:387)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverterKt.approximateForIrOrSelf(Fir2IrTypeConverter.kt:392)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverter.toIrType(Fir2IrTypeConverter.kt:165)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverter.toIrType$default(Fir2IrTypeConverter.kt:97)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverter.toIrType(Fir2IrTypeConverter.kt:84)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverterKt.toIrType(Fir2IrTypeConverter.kt:374)
+	at org.jetbrains.kotlin.fir.backend.Fir2IrTypeConverterKt.toIrType$default(Fir2IrTypeConverter.kt:372)
+	at org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass.superTypes_delegate$lambda$0(Fir2IrLazyClass.kt:125)
+	at org.jetbrains.kotlin.ir.declarations.lazy.SynchronizedLazyVar.getValue(lazyUtil.kt:29)
+	at org.jetbrains.kotlin.ir.declarations.lazy.SynchronizedLazyVar.getValue(lazyUtil.kt:40)
+	at org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass.getSuperTypes(Fir2IrLazyClass.kt:124)
+	at org.jetbrains.kotlin.backend.jvm.codegen.IrCodegenUtilsKt.getReifiedTypeParameters(irCodegenUtils.kt:350)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.putNeedClassReificationMarker(ExpressionCodegen.kt:958)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitConstructorCall(ExpressionCodegen.kt:695)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitConstructorCall(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrConstructorCall.accept(IrConstructorCall.kt:27)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitVariable(ExpressionCodegen.kt:723)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitVariable(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.declarations.IrVariable.accept(IrVariable.kt:36)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitStatementContainer(ExpressionCodegen.kt:484)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:489)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.visitBlockBody(ExpressionCodegen.kt:131)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen.generate(ExpressionCodegen.kt:231)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.doGenerate(FunctionCodegen.kt:135)
+	at org.jetbrains.kotlin.backend.jvm.codegen.FunctionCodegen.generate(FunctionCodegen.kt:55)
+	... 73 more
+
+

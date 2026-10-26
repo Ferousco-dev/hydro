@@ -32,6 +32,33 @@ data class HttpGetRequest(
     }
 }
 
+/**
+ * A JSON POST request.
+ *
+ * Used for hosted inference APIs (Gemini). The body is always UTF-8 JSON and the request must be
+ * HTTPS so prompts, coordinates and tool results are never sent in clear text.
+ */
+data class HttpPostRequest(
+    val uri: URI,
+    val headers: Map<String, String> = emptyMap(),
+    val body: String,
+    val connectTimeout: Duration = Duration.ofSeconds(10),
+    val readTimeout: Duration = Duration.ofSeconds(60)
+) {
+    init {
+        require(uri.scheme.equals("https", ignoreCase = true)) {
+            "Hydro HTTP transport requires HTTPS scheme, got '${uri.scheme}'."
+        }
+        require(body.isNotEmpty()) { "POST body must not be empty." }
+        require(!connectTimeout.isNegative && !connectTimeout.isZero) {
+            "connectTimeout must be positive."
+        }
+        require(!readTimeout.isNegative && !readTimeout.isZero) {
+            "readTimeout must be positive."
+        }
+    }
+}
+
 data class RawHttpResponse(
     val statusCode: Int,
     val body: String,
@@ -42,10 +69,12 @@ data class RawHttpResponse(
 }
 
 /**
- * Minimal, testable HTTP GET abstraction for weather provider adapters.
+ * Minimal, testable HTTP abstraction for weather providers and hosted inference APIs.
  */
 interface HttpTransport {
     suspend fun get(request: HttpGetRequest, providerId: String): EngineResult<RawHttpResponse>
+
+    suspend fun post(request: HttpPostRequest, providerId: String): EngineResult<RawHttpResponse>
 }
 
 /**
@@ -61,30 +90,73 @@ class UrlConnectionHttpTransport : HttpTransport {
 
     override suspend fun get(request: HttpGetRequest, providerId: String): EngineResult<RawHttpResponse> =
         try {
-            runInterruptible(Dispatchers.IO) { execute(request, providerId) }
+            runInterruptible(Dispatchers.IO) {
+                execute(
+                    uri = request.uri,
+                    method = "GET",
+                    headers = request.headers,
+                    body = null,
+                    connectTimeoutDuration = request.connectTimeout,
+                    readTimeoutDuration = request.readTimeout,
+                    providerId = providerId
+                )
+            }
         } catch (ce: CancellationException) {
             throw ce
         } catch (ex: Throwable) {
             EngineResult.Failure(classifyTransportThrowable(ex, providerId))
         }
 
-    private fun execute(request: HttpGetRequest, providerId: String): EngineResult<RawHttpResponse> {
+    override suspend fun post(request: HttpPostRequest, providerId: String): EngineResult<RawHttpResponse> =
+        try {
+            runInterruptible(Dispatchers.IO) {
+                execute(
+                    uri = request.uri,
+                    method = "POST",
+                    headers = request.headers,
+                    body = request.body.toByteArray(Charsets.UTF_8),
+                    connectTimeoutDuration = request.connectTimeout,
+                    readTimeoutDuration = request.readTimeout,
+                    providerId = providerId
+                )
+            }
+        } catch (ce: CancellationException) {
+            throw ce
+        } catch (ex: Throwable) {
+            EngineResult.Failure(classifyTransportThrowable(ex, providerId))
+        }
+
+    private fun execute(
+        uri: URI,
+        method: String,
+        headers: Map<String, String>,
+        body: ByteArray?,
+        connectTimeoutDuration: Duration,
+        readTimeoutDuration: Duration,
+        providerId: String
+    ): EngineResult<RawHttpResponse> {
         var connection: HttpURLConnection? = null
         try {
-            connection = (request.uri.toURL().openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
+            connection = (uri.toURL().openConnection() as HttpURLConnection).apply {
+                requestMethod = method
                 instanceFollowRedirects = false
-                connectTimeout = request.connectTimeout.toMillis().coerceIn(1L, Int.MAX_VALUE.toLong()).toInt()
-                readTimeout = request.readTimeout.toMillis().coerceIn(1L, Int.MAX_VALUE.toLong()).toInt()
-                for ((name, value) in request.headers) {
+                connectTimeout = connectTimeoutDuration.toMillis().coerceIn(1L, Int.MAX_VALUE.toLong()).toInt()
+                readTimeout = readTimeoutDuration.toMillis().coerceIn(1L, Int.MAX_VALUE.toLong()).toInt()
+                for ((name, value) in headers) {
                     setRequestProperty(name, value)
                 }
             }
 
+            if (body != null) {
+                connection.doOutput = true
+                connection.setFixedLengthStreamingMode(body.size)
+                connection.outputStream.use { it.write(body) }
+            }
+
             val statusCode = connection.responseCode
             val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
-            val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
-            val headers = buildMap<String, List<String>> {
+            val responseBody = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+            val responseHeaders = buildMap<String, List<String>> {
                 connection.headerFields.forEach { (key, values) ->
                     if (key != null) put(key, values ?: emptyList())
                 }
@@ -93,8 +165,8 @@ class UrlConnectionHttpTransport : HttpTransport {
             return EngineResult.Success(
                 RawHttpResponse(
                     statusCode = statusCode,
-                    body = body,
-                    headers = headers
+                    body = responseBody,
+                    headers = responseHeaders
                 )
             )
         } catch (ex: IOException) {

@@ -8,14 +8,17 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         EnvironmentalRecordEntity::class,
-        HeatAssessmentEntity::class
+        HeatAssessmentEntity::class,
+        UserPreferencesEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class HydroDatabase : RoomDatabase() {
 
     abstract fun environmentalHistoryDao(): EnvironmentalHistoryDao
+
+    abstract fun userPreferencesDao(): UserPreferencesDao
 
     companion object {
         private const val DATABASE_NAME = "hydro_environmental_history.db"

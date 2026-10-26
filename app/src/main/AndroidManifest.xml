@@ -4,19 +4,35 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Optional: only used to query weather for the user's approximate position. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--
+      Android 13+ requires a runtime grant before Hydro can post proactive alerts. The sink returns
+      NotificationReceipt.Rejected when it is missing, so requesting it stays a UI concern.
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Health Connect: read-only, requested at runtime and only for metrics the user grants. -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE" />
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE" />
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
 
     <application
         android:name=".HydroApplication"
         android:allowBackup="false"
         android:label="Hydro"
         android:supportsRtl="true">
-        <!-- Optional OpenCL/VNDK native libraries enabling LiteRT-LM GPU delegate for Gemma 3n on Android -->
-        <uses-native-library
-            android:name="libvndksupport.so"
-            android:required="false" />
-        <uses-native-library
-            android:name="libOpenCL.so"
-            android:required="false" />
+
+        <!-- Used by the Maps SDK in the upcoming map screen. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".MainActivity"
@@ -24,6 +40,10 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Health Connect requires an activity that explains how Hydro uses the data. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
     </application>

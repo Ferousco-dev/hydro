@@ -79,25 +79,39 @@ class HydroToolRegistryTest {
     }
 
     @Test
-    fun `all 6 default AI tools execute cleanly with validated JSON arguments and zero network or LLM`() = runBlocking {
+    fun `all default AI tools execute cleanly with validated JSON arguments and zero network or LLM`() = runBlocking {
         val (engine, _) = buildTestEngine()
         val registry = engine.toolRegistry
 
         assertEquals(
             setOf(
-                "get_current_weather",
+                "get_weather",
                 "get_hourly_forecast",
                 "get_historical_weather",
-                "calculate_heat_assessment",
+                "calculate_heat_risk",
                 "compare_forecast_periods",
-                "query_local_history"
+                "query_memory",
+                "get_current_location",
+                "analyze_anomaly",
+                "get_route_conditions",
+                "get_heat_map",
+                "get_wearable_data",
+                "create_notification",
+                "plan_hydration",
+                "get_environmental_news",
+                "get_air_quality",
+                "get_solar_climate",
+                "geocode_place",
+                "get_pollen",
+                "find_nearby_relief",
+                "get_google_weather"
             ),
             registry.descriptors().map { it.name }.toSet()
         )
 
-        // 1. get_current_weather
+        // 1. get_weather
         val r1 = registry.executeJson(
-            "get_current_weather",
+            "get_weather",
             """{"latitude": 7.3775, "longitude": 3.9470, "timezone": "Africa/Lagos"}"""
         )
         assertTrue(r1 is ToolCallOutcome.Success)
@@ -119,9 +133,9 @@ class HydroToolRegistryTest {
         assertTrue(r3 is ToolCallOutcome.Success)
         assertEquals("HISTORICAL_REANALYSIS_OBSERVATION", r3.jsonResult.getString("observation_kind"))
 
-        // 4. calculate_heat_assessment
+        // 4. calculate_heat_risk
         val r4 = registry.executeJson(
-            "calculate_heat_assessment",
+            "calculate_heat_risk",
             """
             {
               "latitude": 7.3775,
@@ -157,7 +171,7 @@ class HydroToolRegistryTest {
         assertTrue(r5 is ToolCallOutcome.Success)
         assertEquals("EVALUATED", r5.jsonResult.getString("status"))
 
-        // Seed history and invoke 6. query_local_history with comparison
+        // Seed history and invoke 6. query_memory with comparison
         val yest = TestFixtures.buildObservation(
             observedAt = Instant.parse("2026-10-25T12:00:00Z"),
             retrievedAt = Instant.parse("2026-10-25T12:05:00Z"),
@@ -172,7 +186,7 @@ class HydroToolRegistryTest {
         engine.historyRepository.recordObservation(tod, recordId = "rec-tod")
 
         val r6 = registry.executeJson(
-            "query_local_history",
+            "query_memory",
             """
             {
               "latitude": 7.3775,
@@ -201,7 +215,7 @@ class HydroToolRegistryTest {
 
         // 2. Extra / smuggled parameter rejected (additionalProperties = false)
         val extraParam = registry.executeJson(
-            "get_current_weather",
+            "get_weather",
             """{"latitude": 7.37, "longitude": 3.94, "override_url": "https://evil.example"}"""
         )
         assertTrue(extraParam is ToolCallOutcome.Failure)
@@ -209,7 +223,7 @@ class HydroToolRegistryTest {
 
         // 3. Out-of-bounds latitude
         val badLat = registry.executeJson(
-            "get_current_weather",
+            "get_weather",
             """{"latitude": 145.0, "longitude": 3.94}"""
         )
         assertTrue(badLat is ToolCallOutcome.Failure)
@@ -217,7 +231,7 @@ class HydroToolRegistryTest {
 
         // 4. Wrong JSON type (string instead of number)
         val wrongType = registry.executeJson(
-            "get_current_weather",
+            "get_weather",
             """{"latitude": "7.37", "longitude": 3.94}"""
         )
         assertTrue(wrongType is ToolCallOutcome.Failure)
@@ -225,7 +239,7 @@ class HydroToolRegistryTest {
 
         // 5. Missing required parameter
         val missingReq = registry.executeJson(
-            "get_current_weather",
+            "get_weather",
             """{"latitude": 7.37}"""
         )
         assertTrue(missingReq is ToolCallOutcome.Failure)
@@ -234,7 +248,7 @@ class HydroToolRegistryTest {
         // 6. Permission gate denial (e.g., disallow LOCAL_HISTORY_READ)
         val restrictedGate = SetBasedToolPermissionGate(setOf(ToolCapability.DETERMINISTIC_ANALYSIS))
         val denied = registry.executeJson(
-            "query_local_history",
+            "query_memory",
             """{"latitude": 7.37, "longitude": 3.94}""",
             permissionGate = restrictedGate
         )
@@ -272,15 +286,15 @@ class HydroToolRegistryTest {
         val exportedJson = registry.exportToolDeclarationsJson()
         val parsedExport = com.ferousco.hydro.core.json.SafeJsonCodec.parse(exportedJson).getOrNull()
         assertTrue(parsedExport is JsonValue.ArrayValue)
-        assertEquals(6, parsedExport.items.size)
+        assertEquals(20, parsedExport.items.size)
         for (item in parsedExport.items) {
             val decl = item as JsonValue.ObjectValue
             assertEquals(false, decl.getObject("parameters")!!.getBoolean("additionalProperties"))
         }
 
-        // 9. calculate_heat_assessment with omitted required humidity returns INCOMPLETE assessment cleanly
+        // 9. calculate_heat_risk with omitted required humidity returns INCOMPLETE assessment cleanly
         val incompleteAssessmentCall = registry.executeJson(
-            "calculate_heat_assessment",
+            "calculate_heat_risk",
             """
             {
               "latitude": 7.3775,

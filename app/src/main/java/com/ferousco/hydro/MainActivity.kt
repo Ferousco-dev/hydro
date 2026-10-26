@@ -1,6 +1,7 @@
 package com.ferousco.hydro
 
 import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,6 +17,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.ImeAction
+import com.ferousco.hydro.core.model.ActivityCategory
+import com.ferousco.hydro.ui.ChatMessage
+import com.ferousco.hydro.ui.RecommendationUi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -73,23 +93,39 @@ class MainActivity : ComponentActivity() {
 private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    val locationProvider = DeviceLocationProvider(context)
+    val locationProvider = remember { DeviceLocationProvider(context) }
+
+    // Alerts are silently rejected on Android 13+ unless this is granted, so ask for it up front.
+    val notificationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) {
         viewModel.refresh()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     LaunchedEffect(Unit) {
         if (!locationProvider.hasLocationPermission()) {
             permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
     HydroScreen(
         state = state,
         onRefresh = viewModel::refresh,
+        onActivity = viewModel::setActivity,
+        onAsk = viewModel::ask,
         onRequestLocation = {
             permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
@@ -100,6 +136,8 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
 private fun HydroScreen(
     state: HydroUiState,
     onRefresh: () -> Unit,
+    onActivity: (ActivityCategory) -> Unit,
+    onAsk: (String) -> Unit,
     onRequestLocation: () -> Unit
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = Background) {
@@ -141,6 +179,13 @@ private fun HydroScreen(
             }
 
             ProvenanceRow(state)
+
+            ActivityChips(state.activity, onActivity)
+            state.recommendation?.let { RecommendationCard(it) }
+            state.recommendationError?.let {
+                MessageCard("Advice unavailable", it, Warning)
+            }
+            AssistantCard(state, onAsk)
 
             Button(
                 onClick = onRefresh,
@@ -390,3 +435,136 @@ private fun MessageCard(title: String, body: String, accent: Color) {
 
 private fun Double?.formatOrDash(decimals: Int): String =
     this?.let { String.format(Locale.getDefault(), "%.${decimals}f", it) } ?: "—"
+
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ActivityChips(selected: ActivityCategory, onSelect: (ActivityCategory) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("PLANNING FOR", color = Muted, fontSize = 11.sp, letterSpacing = 2.sp)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActivityCategory.values().forEach { category ->
+                FilterChip(
+                    selected = category == selected,
+                    onClick = { onSelect(category) },
+                    label = { Text(category.displayName, fontSize = 12.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Lime,
+                        selectedLabelColor = Background,
+                        containerColor = CardColor,
+                        labelColor = Muted
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecommendationCard(rec: RecommendationUi) {
+    val accent = when (rec.urgency) {
+        "CRITICAL", "HIGH" -> Danger
+        "MODERATE" -> Warning
+        "LOW" -> Lime
+        else -> Muted
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ElevatedCard, RoundedCornerShape(24.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("WHAT TO DO · ${rec.urgency}", color = accent, fontSize = 11.sp, letterSpacing = 2.sp)
+        Text(rec.headline, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(rec.summary, color = Muted, fontSize = 13.sp, lineHeight = 18.sp)
+        rec.bestWindow?.let {
+            Text("Coolest window: $it", color = Lime, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+        rec.actions.forEach { (title, detail) ->
+            Column {
+                Text(title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(detail, color = Muted, fontSize = 12.sp, lineHeight = 16.sp)
+            }
+        }
+        if (!rec.isCurrentData) {
+            Text("Based on aging data. Refresh before relying on this.", color = Warning, fontSize = 11.sp)
+        }
+        rec.limitations.forEach {
+            Text("• $it", color = Muted, fontSize = 11.sp, lineHeight = 15.sp)
+        }
+    }
+}
+
+@Composable
+private fun AssistantCard(state: HydroUiState, onAsk: (String) -> Unit) {
+    var input by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardColor, RoundedCornerShape(24.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text("ASK HYDRO", color = Muted, fontSize = 11.sp, letterSpacing = 2.sp)
+        if (!state.assistantEnabled) {
+            Text(
+                "Add GEMINI_API_KEY to local.properties and rebuild to enable the assistant. " +
+                    "Everything above works without it.",
+                color = Muted, fontSize = 12.sp, lineHeight = 16.sp
+            )
+            return@Column
+        }
+        state.chat.forEach { ChatBubble(it) }
+        if (state.isAsking) {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = Lime, trackColor = Background)
+        }
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Should I walk 12 km this afternoon?", fontSize = 13.sp) },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = {
+                onAsk(input); input = ""
+            }),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Lime,
+                unfocusedBorderColor = Muted
+            )
+        )
+        Button(
+            onClick = { onAsk(input); input = "" },
+            enabled = input.isNotBlank() && !state.isAsking,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Lime, contentColor = Background)
+        ) { Text("Ask", fontWeight = FontWeight.SemiBold) }
+    }
+}
+
+@Composable
+private fun ChatBubble(message: ChatMessage) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (message.fromUser) ElevatedCard else Background,
+                RoundedCornerShape(16.dp)
+            )
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            if (message.fromUser) "You" else "Hydro",
+            color = if (message.fromUser) Muted else Lime,
+            fontSize = 11.sp
+        )
+        Text(message.text, color = Color.White, fontSize = 13.sp, lineHeight = 18.sp)
+        message.note?.let { Text("Tools: $it", color = Muted, fontSize = 10.sp) }
+    }
+}

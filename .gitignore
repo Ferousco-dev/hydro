@@ -19,7 +19,6 @@ local.properties
 !.env.example
 
 # On-device AI model weights (never commit multi-GB gated artifacts)
-*.litertlm
 *.task
 *.tflite
 models/

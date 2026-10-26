@@ -4,7 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ferousco.hydro.HydroApplication
+import com.ferousco.hydro.core.ai.HydroAssistantOutcome
 import com.ferousco.hydro.core.error.EngineResult
+import com.ferousco.hydro.core.model.ActivityCategory
+import java.time.Duration
+import java.time.format.DateTimeFormatter
 import com.ferousco.hydro.core.model.EnvironmentalObservation
 import com.ferousco.hydro.core.model.GeoLocation
 import com.ferousco.hydro.core.model.HeatAssessment
@@ -52,8 +56,26 @@ data class HydroUiState(
     val isLiveAndFresh: Boolean = false,
     val observationTime: Instant? = null,
     val savedHistoryCount: Int = 0,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val activity: ActivityCategory = ActivityCategory.WALKING,
+    val recommendation: RecommendationUi? = null,
+    val recommendationError: String? = null,
+    val assistantEnabled: Boolean = false,
+    val isAsking: Boolean = false,
+    val chat: List<ChatMessage> = emptyList()
 )
+
+data class RecommendationUi(
+    val urgency: String,
+    val headline: String,
+    val summary: String,
+    val actions: List<Pair<String, String>>,
+    val bestWindow: String?,
+    val limitations: List<String>,
+    val isCurrentData: Boolean
+)
+
+data class ChatMessage(val fromUser: Boolean, val text: String, val note: String? = null)
 
 /**
  * Loads one live environmental observation, runs the deterministic heat/UV assessment,
@@ -65,7 +87,9 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     private val engine = app.engine
     private val locationProvider = DeviceLocationProvider(application)
 
-    private val _state = MutableStateFlow(HydroUiState())
+    private val _state = MutableStateFlow(
+        HydroUiState(assistantEnabled = com.ferousco.hydro.BuildConfig.GEMINI_API_KEY.isNotBlank())
+    )
     val state: StateFlow<HydroUiState> = _state.asStateFlow()
 
     init {
@@ -73,7 +97,11 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refresh() {
-        if (_state.value.isLoading) return
+        if (_state.value.isLoading) {
+            // e.g. the location-permission result arriving mid-load: rerun so the grant is used.
+            refreshQueued = true
+            return
+        }
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
@@ -98,6 +126,8 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                     val assessment = engine.assessmentEngine.assessObservation(observation)
 
                     val historyCount = persist(observation, assessment)
+                    lastLocation = location
+                    loadRecommendation(location)
 
                     _state.update { previous ->
                         previous.copy(
@@ -141,6 +171,90 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             }
+            if (refreshQueued) {
+                refreshQueued = false
+                refresh()
+            }
+        }
+    }
+
+    private var lastLocation: GeoLocation = DEFAULT_LOCATION
+    private var refreshQueued = false
+
+    fun setActivity(activity: ActivityCategory) {
+        if (activity == _state.value.activity) return
+        _state.update { it.copy(activity = activity) }
+        viewModelScope.launch { loadRecommendation(lastLocation) }
+    }
+
+    /** Deterministic advice: urgency, ordered actions and the coolest forecast window. */
+    private suspend fun loadRecommendation(location: GeoLocation) {
+        val result = engine.recommendForLocation(
+            location = location,
+            activityCategory = _state.value.activity,
+            plannedDuration = Duration.ofHours(2)
+        )
+        val zone = location.timeZone ?: ZoneId.systemDefault()
+        val fmt = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
+        _state.update { current ->
+            when (result) {
+                is EngineResult.Failure -> current.copy(
+                    recommendation = null,
+                    recommendationError = result.error.message
+                )
+                is EngineResult.Success -> {
+                    val r = result.value
+                    current.copy(
+                        recommendationError = null,
+                        recommendation = RecommendationUi(
+                            urgency = r.urgency.name,
+                            headline = r.headline,
+                            summary = r.summary,
+                            actions = r.actions.map { it.title to it.detail },
+                            bestWindow = r.bestWindow?.let {
+                                "${fmt.format(it.start)}–${fmt.format(it.end)} " +
+                                    "(peak ${it.peakCategory.displayName})"
+                            },
+                            limitations = r.limitations,
+                            isCurrentData = r.isCurrentData
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    /** Sends a question to the Gemini-backed orchestrator; every number comes from a tool. */
+    fun ask(prompt: String) {
+        val text = prompt.trim()
+        if (text.isEmpty() || _state.value.isAsking) return
+        _state.update {
+            it.copy(isAsking = true, chat = it.chat + ChatMessage(fromUser = true, text = text))
+        }
+        viewModelScope.launch {
+            val outcome = app.orchestrator.respond(
+                userPrompt = text,
+                userLocationContext = lastLocation
+            )
+            val reply = when (outcome) {
+                is HydroAssistantOutcome.Responded -> ChatMessage(
+                    fromUser = false,
+                    text = outcome.responseText,
+                    note = outcome.grounding.executedTools
+                        .filter { it.succeeded }
+                        .joinToString(" · ") { it.toolName }
+                        .ifBlank { null }
+                )
+                is HydroAssistantOutcome.ModelUnavailable -> ChatMessage(
+                    fromUser = false,
+                    text = "Assistant is offline: ${outcome.message}"
+                )
+                is HydroAssistantOutcome.Failed -> ChatMessage(
+                    fromUser = false,
+                    text = "I couldn't finish that: ${outcome.error.message}"
+                )
+            }
+            _state.update { it.copy(isAsking = false, chat = it.chat + reply) }
         }
     }
 
