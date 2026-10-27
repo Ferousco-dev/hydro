@@ -60,6 +60,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            // Sideload build: signed with the standard debug key so it installs. Replace this with a
+            // private release keystore before publishing to the Play Store.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
