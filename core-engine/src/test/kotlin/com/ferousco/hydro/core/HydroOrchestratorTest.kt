@@ -236,6 +236,56 @@ class HydroOrchestratorTest {
     }
 
     @Test
+    fun `progress callback reports each tool as it starts and plain-language mode omits source attribution`() = runBlocking {
+        val fixedNow = Instant.parse("2026-10-26T12:10:00Z")
+        val fakeProvider = FakeWeatherProvider().apply {
+            currentResult = EngineResult.Success(
+                TestFixtures.buildObservation(
+                    airTempC = 30.0, rhPercent = 60.0, uvIndex = 5.0,
+                    observedAt = Instant.parse("2026-10-26T12:00:00Z"), retrievedAt = fixedNow
+                )
+            )
+        }
+        val engine = HydroEngine.create(weatherProvider = fakeProvider, clock = MutableClock(fixedNow))
+        val ready = LlmReadiness.Ready(
+            modelSpec = LlmModelCatalog.GEMMA_3N_E2B_IT_LITERT_LM,
+            resolvedFilePath = "/models/m.litertlm",
+            actualFileSizeBytes = requireNotNull(LlmModelCatalog.GEMMA_3N_E2B_IT_LITERT_LM.expectedSizeBytes),
+            matchesOfficialReleaseSize = true
+        )
+        val client = ScriptedGemma3nClient(readiness = ready) { round, _ ->
+            val runtime = LlmActiveRuntimeInfo(
+                modelSpec = LlmModelCatalog.GEMMA_3N_E2B_IT_LITERT_LM,
+                activeBackend = LlmExecutionBackend.GPU,
+                modalityMode = LlmModalityMode.MULTIMODAL_TEXT_VISION_AUDIO
+            )
+            if (round == 0) {
+                LlmGenerationResponse(
+                    text = "```tool_call\n{\"tool_call\":{\"name\":\"get_weather\",\"arguments\":{\"latitude\":7.3775,\"longitude\":3.9470}}}\n```",
+                    runtimeInfo = runtime
+                )
+            } else {
+                LlmGenerationResponse(text = "It is warm and comfortable.", runtimeInfo = runtime)
+            }
+        }
+        val started = mutableListOf<String>()
+        val orchestrator = engine.createOrchestrator(client, HydroOrchestratorConfig(showSourceAttribution = false))
+        val outcome = orchestrator.respond(
+            userPrompt = "How is it outside?",
+            userLocationContext = TestFixtures.IBADAN,
+            onToolStarted = { started += it }
+        )
+
+        assertEquals(listOf("get_weather"), started)
+        assertTrue(outcome is HydroAssistantOutcome.Responded)
+        assertFalse(outcome.responseText.contains("Open-Meteo", ignoreCase = true))
+        assertFalse(outcome.responseText.contains("Source:"))
+        // The prompt also tells the model to keep replies free of technical terms.
+        assertTrue(orchestrator.buildGroundedSystemPrompt().contains("plain, short sentences", ignoreCase = true) ||
+            orchestrator.buildGroundedSystemPrompt().contains("plain sentences", ignoreCase = true))
+    }
+
+    @Test
     fun `orchestrator handles missing model file, cached fallback disclosure, disallowed tools, and round limits`() = runBlocking {
         val fixedNow = Instant.parse("2026-10-26T12:10:00Z")
         val clock = MutableClock(fixedNow)

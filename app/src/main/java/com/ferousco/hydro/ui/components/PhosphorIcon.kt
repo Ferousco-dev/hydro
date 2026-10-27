@@ -37,7 +37,15 @@ enum class PhIcon(@DrawableRes val regular: Int, @DrawableRes val fill: Int? = n
     Wind(R.drawable.ph_wind),
     Thermometer(R.drawable.ph_thermometer),
     Plus(R.drawable.ph_plus),
-    Minus(R.drawable.ph_minus)
+    Minus(R.drawable.ph_minus),
+    Info(R.drawable.ph_info),
+    ArrowUp(R.drawable.ph_arrow_up),
+    Stop(R.drawable.ph_stop_fill),
+    Back(R.drawable.ph_arrow_left),
+    Pin(R.drawable.ph_map_pin, R.drawable.ph_map_pin_fill),
+    TabMap(R.drawable.ph_map_trifold, R.drawable.ph_map_trifold_fill),
+    TabTrends(R.drawable.ph_chart_line_up, R.drawable.ph_chart_line_up_fill),
+    TabAlerts(R.drawable.ph_bell, R.drawable.ph_bell_fill)
 }
 
 /**

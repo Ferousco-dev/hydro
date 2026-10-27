@@ -65,6 +65,9 @@ class HydroEngine(
     val recommendationService: RecommendationService,
     val historyRepository: EnvironmentalHistoryRepository,
     val toolRegistry: HydroToolRegistry,
+    /** Exposed so callers can draw the actual route geometry, not just the sampled conditions. */
+    val routingProvider: com.ferousco.hydro.core.integration.RoutingProvider =
+        com.ferousco.hydro.core.integration.GreatCircleRoutingProvider(),
     val preferencesStore: UserPreferencesStore = InMemoryUserPreferencesStore(),
     private val clock: Clock = Clock.systemUTC(),
     private val logger: DiagnosticLogger = NoOpDiagnosticLogger
@@ -296,6 +299,7 @@ class HydroEngine(
                 ),
                 historyRepository = history,
                 toolRegistry = tools,
+                routingProvider = routingProvider,
                 preferencesStore = preferencesStore,
                 clock = clock,
                 logger = logger

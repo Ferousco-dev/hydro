@@ -14,6 +14,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,7 @@ fun HydroIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    selected: Boolean = false,
     tint: Color = HydroColors.TextPrimary
 ) {
     Box(
@@ -102,6 +104,7 @@ fun HydroIconButton(
         PhosphorIcon(
             icon = icon,
             contentDescription = null,
+            selected = selected,
             size = HydroDimens.IconCompact,
             tint = if (enabled) tint else HydroColors.TextSecondary.copy(alpha = 0.5f)
         )

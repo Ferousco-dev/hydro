@@ -46,13 +46,15 @@ Weather apps report conditions but leave interpretation to the user. In hot, hum
 | F7 | Nearby shade, indoor cooling, water, medical | Done (tool, needs Google key) |
 | F8 | Route-aware conditions along a real route, with elevation | Done (Google Routes + Elevation) |
 | F8b | Relief reachable in N real minutes; area green/medical density; time zone for any place | Done (tools, unverified live) |
+| F16 | Plan a trip: search, route, mode switch, plain-language advice, heat chart, trip-aware chat | Done (needs a Maps key for road routes) |
+| F17 | Pin places and open their trip advice in one tap | Done |
 | F9 | Heat-map layer for a radius | Done (data); map rendering pending |
 | F10 | Local news on heat, air, floods, storms | Done (tool, needs Tavily key) |
 | F11 | Local memory and "today vs yesterday" | Done |
 | F12 | Proactive background alerts with quiet hours, dedup, thresholds | Done |
-| F13 | Optional wearable context (Health Connect) | Data source done; permission UI pending |
-| F14 | Interactive map screen with overlays | Not started |
-| F15 | Alerts/history/settings screens | Not started |
+| F13 | Optional wearable context (Health Connect) | Done: Connect card, permission flow, trip suggestion, assistant gate. Not yet tried with a real watch |
+| F14 | Interactive map screen with overlays | Done (heat grid, air quality; needs a Maps key for tiles) |
+| F15 | Alerts/history/settings screens | Done (Trends, Alerts) |
 
 ### Non-functional
 - **Honesty:** never fabricate or zero-fill missing data; distinguish observed / forecast / modelled / derived.

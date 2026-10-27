@@ -7,11 +7,14 @@ import com.ferousco.hydro.HydroApplication
 import com.ferousco.hydro.core.ai.HydroAssistantOutcome
 import com.ferousco.hydro.core.error.EngineResult
 import com.ferousco.hydro.core.json.JsonValue
-import com.ferousco.hydro.core.json.SafeJsonCodec
 import com.ferousco.hydro.core.tools.ToolCallOutcome
 import com.ferousco.hydro.core.integration.NotificationSeverity
-import com.ferousco.hydro.core.memory.HistoricalComparator
-import com.ferousco.hydro.core.memory.YesterdayComparison
+import com.ferousco.hydro.core.integration.WearableMetric
+import com.ferousco.hydro.core.trip.TripMode
+import com.ferousco.hydro.core.trip.WearableAdvisor
+import com.ferousco.hydro.wearables.HealthConnectWearableDataSource
+import com.ferousco.hydro.ui.trip.ForecastBars
+import com.ferousco.hydro.ui.trip.TripController
 import com.ferousco.hydro.core.model.ActivityCategory
 import com.ferousco.hydro.core.model.NwsHeatIndexCategory
 import java.time.Duration
@@ -30,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -69,12 +73,18 @@ data class HydroUiState(
     val recommendationError: String? = null,
     val assistantEnabled: Boolean = false,
     val isAsking: Boolean = false,
+    /** What the assistant is doing right now, in plain words; null when idle. */
+    val askStatus: String? = null,
     val mapLatitude: Double? = null,
     val mapLongitude: Double? = null,
     val isSearching: Boolean = false,
     val searchError: String? = null,
-    val isCustomLocation: Boolean = false,
+    val suggestions: List<PlaceSuggestionUi> = emptyList(),
+    val pins: List<PinnedPlaceUi> = emptyList(),
+    val wearables: WearablesUi = WearablesUi(),
     val trend: TrendUi? = null,
+    val sky: SkyUi? = null,
+    val animationsOn: Boolean = true,
     val trip: TripUi? = null,
     val heatLayerOn: Boolean = false,
     val heatLayerLoading: Boolean = false,
@@ -89,36 +99,16 @@ data class TrendHour(
     val heatIndexC: Double,
     val severity: Int,
     val categoryName: String,
-    val isNow: Boolean
+    val isNow: Boolean,
+    val tempC: Double? = null,
+    val weatherCode: Int? = null,
+    val isDay: Boolean? = null
 )
 
 data class TrendUi(
     val hours: List<TrendHour>,
     val hottest: TrendHour?,
-    val coolest: TrendHour?,
-    val yesterday: String
-)
-
-enum class TripMode(val label: String, val apiName: String) {
-    Walk("Walk", "WALKING"),
-    Bike("Bike", "CYCLING"),
-    Drive("Drive", "DRIVING")
-}
-
-data class TripPoint(val latitude: Double, val longitude: Double, val severity: Int)
-
-data class TripUi(
-    val destinationLat: Double,
-    val destinationLon: Double,
-    val mode: TripMode = TripMode.Walk,
-    val isLoading: Boolean = true,
-    val distanceKm: Double? = null,
-    val durationMinutes: Int? = null,
-    val worstCategory: String? = null,
-    val advisories: List<String> = emptyList(),
-    val points: List<TripPoint> = emptyList(),
-    val method: String? = null,
-    val error: String? = null
+    val coolest: TrendHour?
 )
 
 data class HeatCellUi(val latitude: Double, val longitude: Double, val value: Double, val severity: Int)
@@ -147,7 +137,18 @@ data class RecommendationUi(
     val isCurrentData: Boolean
 )
 
-data class ChatMessage(val fromUser: Boolean, val text: String, val note: String? = null)
+/**
+ * One chat message. [sources] are plain-language names of what an answer used ("weather", "air
+ * quality"); [animate] is true only for a reply that should be typed out once when it arrives.
+ */
+data class ChatMessage(
+    val id: Long,
+    val fromUser: Boolean,
+    val text: String,
+    val sources: List<String> = emptyList(),
+    val isError: Boolean = false,
+    val animate: Boolean = false
+)
 
 /**
  * Loads one live environmental observation, runs the deterministic heat/UV assessment,
@@ -160,13 +161,35 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     private val locationProvider = DeviceLocationProvider(application)
 
     private val _state = MutableStateFlow(
-        HydroUiState(assistantEnabled = com.ferousco.hydro.BuildConfig.GEMINI_API_KEY.isNotBlank())
+        HydroUiState(
+            assistantEnabled = com.ferousco.hydro.BuildConfig.GEMINI_API_KEY.isNotBlank(),
+            animationsOn = application.getSharedPreferences("hydro_display", android.content.Context.MODE_PRIVATE)
+                .getBoolean("animations_on", true)
+        )
     )
     val state: StateFlow<HydroUiState> = _state.asStateFlow()
+
+    private val privacy = HealthPrivacy(application)
+    private val displayPrefs = application.getSharedPreferences("hydro_display", android.content.Context.MODE_PRIVATE)
+    private var lastLocation: GeoLocation = DEFAULT_LOCATION
+    private var refreshQueued = false
+
+    private val trips = TripController(
+        engine = engine,
+        scope = viewModelScope,
+        state = _state,
+        originProvider = { locationProvider.lastKnownLocation() ?: DEFAULT_LOCATION },
+        writeBrief = { prompt, destination ->
+            (app.orchestrator.respond(userPrompt = prompt, userLocationContext = destination, permissionGate = privacy.assistantGate) as? HydroAssistantOutcome.Responded)?.responseText
+        }
+    )
 
     init {
         refresh()
         loadAlertPreferences()
+        trips.loadPins()
+        _state.update { it.copy(wearables = it.wearables.copy(assistantMayUse = privacy.assistantMayUseHealthData)) }
+        refreshWearables()
     }
 
     fun refresh() {
@@ -179,7 +202,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val deviceLocation = locationProvider.lastKnownLocation()
-            val location = selectedLocation ?: deviceLocation ?: DEFAULT_LOCATION
+            val location = deviceLocation ?: DEFAULT_LOCATION
 
             when (val result = engine.weatherRepository.getCurrentObservation(location)) {
                 is EngineResult.Failure -> {
@@ -187,8 +210,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                         it.copy(
                             isLoading = false,
                             locationLabel = location.label ?: "Selected location",
-                            usingDeviceLocation = deviceLocation != null && selectedLocation == null,
-                            isCustomLocation = selectedLocation != null,
+                            usingDeviceLocation = deviceLocation != null,
                             mapLatitude = location.latitude,
                             mapLongitude = location.longitude,
                             errorMessage = result.error.userMessage()
@@ -212,8 +234,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                             locationLabel = observation.effectiveLocation.label
                                 ?: location.label
                                 ?: "Selected location",
-                            usingDeviceLocation = deviceLocation != null && selectedLocation == null,
-                            isCustomLocation = selectedLocation != null,
+                            usingDeviceLocation = deviceLocation != null,
                             mapLatitude = location.latitude,
                             mapLongitude = location.longitude,
                             airTemperatureCelsius = observation.variables.airTemperature
@@ -258,57 +279,78 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private var lastLocation: GeoLocation = DEFAULT_LOCATION
 
-    /** A place the user searched for; overrides the device and default locations until cleared. */
-    private var selectedLocation: GeoLocation? = null
+    // ----- Destination flow (search, trip, pins) lives in TripController -----
 
-    /** Resolves a place name with the `geocode_place` tool and loads conditions for the first match. */
-    fun search(query: String) {
-        val text = query.trim()
-        if (text.isEmpty() || _state.value.isSearching) return
-        _state.update { it.copy(isSearching = true, searchError = null) }
+    fun searchPlaces(query: String) = trips.searchPlaces(query)
+    fun clearSuggestions() = trips.clearSuggestions()
+    fun submitSearch(query: String) = trips.submitSearch(query)
+    fun clearSearchError() = trips.clearSearchError()
+    fun selectPlace(place: PlaceSuggestionUi) = trips.selectPlace(place)
+    fun setDestination(latitude: Double, longitude: Double) = trips.setDestination(latitude, longitude)
+    fun openPin(pin: PinnedPlaceUi) = trips.openPin(pin)
+    fun setTripMode(mode: TripMode) = trips.setMode(mode)
+    fun clearTrip() = trips.clearTrip()
+    fun retryTrip() = trips.retry()
+    fun pinCurrent(label: String) = trips.pinCurrent(label)
+    fun unpinCurrent() = trips.unpinCurrent()
+
+    // ----- Wearables (Android Health Connect) -----
+
+    /** Checks the connection and reads the latest heart rate and steps, if the user allowed them. */
+    fun refreshWearables() {
         viewModelScope.launch {
-            val args = SafeJsonCodec.stringify(
-                JsonValue.ObjectValue(
-                    linkedMapOf(
-                        "query" to JsonValue.StringValue(text),
-                        "max_results" to JsonValue.NumberValue("1", 1.0)
-                    )
-                )
-            )
-            when (val outcome = engine.toolRegistry.executeJson("geocode_place", args)) {
-                is ToolCallOutcome.Failure ->
-                    _state.update { it.copy(isSearching = false, searchError = outcome.error.userMessage()) }
-                is ToolCallOutcome.Success -> {
-                    val match = outcome.jsonResult.getArray("matches")?.items?.firstOrNull() as? JsonValue.ObjectValue
-                    val lat = match?.getDouble("latitude")
-                    val lon = match?.getDouble("longitude")
-                    val resolved = if (match != null && lat != null && lon != null) {
-                        (GeoLocation.validated(lat, lon, label = match.getString("name")) as? EngineResult.Success)?.value
+            val source = app.wearables
+            val link = source.connection()
+            val wearables = when (link) {
+                HealthConnectWearableDataSource.Connection.NotSupported -> WearablesUi(WearableLinkUi.NotSupported)
+                HealthConnectWearableDataSource.Connection.NeedsInstall -> WearablesUi(WearableLinkUi.NeedsInstall)
+                HealthConnectWearableDataSource.Connection.NeedsPermission -> WearablesUi(WearableLinkUi.NeedsPermission)
+                is HealthConnectWearableDataSource.Connection.Connected -> {
+                    val now = Instant.now()
+                    val heartRate = if (WearableMetric.HEART_RATE_BPM in link.metrics) {
+                        source.latest(WearableMetric.HEART_RATE_BPM, Duration.ofMinutes(WearableAdvisor.MAX_SAMPLE_AGE_MINUTES.toLong()), now)
                     } else {
                         null
                     }
-                    if (resolved == null) {
-                        _state.update { it.copy(isSearching = false, searchError = "Couldn't find that place. Try a nearby city or landmark.") }
+                    val steps = if (WearableMetric.STEPS in link.metrics) {
+                        source.stepsSince(java.time.LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant(), now)
                     } else {
-                        selectedLocation = resolved
-                        _state.update { it.copy(isSearching = false, searchError = null) }
-                        refresh()
+                        null
                     }
+                    WearablesUi(
+                        link = WearableLinkUi.Connected,
+                        heartRateBpm = heartRate?.value?.toInt(),
+                        heartRateAgeMinutes = heartRate?.let { Duration.between(it.recordedAt, now).toMinutes().toInt() },
+                        stepsToday = steps
+                    )
                 }
             }
+            _state.update { it.copy(wearables = wearables.copy(assistantMayUse = privacy.assistantMayUseHealthData)) }
+            trips.refreshWearableNote()
         }
     }
 
-    fun clearSearchError() = _state.update { it.copy(searchError = null) }
-
-    /** Drops any searched place and goes back to the device location (or the disclosed default). */
-    fun useMyLocation() {
-        selectedLocation = null
-        refresh()
+    fun disconnectWearables() {
+        viewModelScope.launch {
+            app.wearables.disconnect()
+            privacy.assistantMayUseHealthData = false
+            refreshWearables()
+        }
     }
-    private var refreshQueued = false
+
+    fun setAnimationsOn(on: Boolean) {
+        displayPrefs.edit().putBoolean("animations_on", on).apply()
+        _state.update { it.copy(animationsOn = on) }
+    }
+
+    fun setAssistantMayUseHealthData(allowed: Boolean) {
+        privacy.assistantMayUseHealthData = allowed
+        _state.update { it.copy(wearables = it.wearables.copy(assistantMayUse = allowed)) }
+    }
+
+    /** Re-reads conditions for where the user is now. */
+    fun useMyLocation() = refresh()
 
     fun setActivity(activity: ActivityCategory) {
         if (activity == _state.value.activity) return
@@ -316,52 +358,16 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { loadRecommendation(lastLocation) }
     }
 
-    /** Next-24-hours heat bars and the "versus yesterday" line, all from deterministic engine calls. */
+    /** Next-24-hours heat bars, from deterministic engine calls. */
     private suspend fun loadTrend(location: GeoLocation) {
-        val forecastResult = engine.weatherRepository.getHourlyForecast(location, 30)
-        val envelope = (forecastResult as? EngineResult.Success)?.value ?: run {
-            _state.update { it.copy(trend = null) }
-            return
-        }
-        val forecast = envelope.data
-        val now = java.time.Instant.now()
-        val zone = forecast.timeZone
-        val fmt = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
-        val hours = forecast.hourly
-            .filter { !it.validAt.isBefore(now.minus(Duration.ofHours(1))) }
-            .take(24)
-            .mapNotNull { point ->
-                val supported = engine.assessmentEngine.assessForecastPoint(point, forecast.quality) as? HeatAssessment.Supported
-                    ?: return@mapNotNull null
-                TrendHour(
-                    label = fmt.format(point.validAt),
-                    heatIndexC = supported.heatIndexCelsius.value,
-                    severity = supported.category.severityRank,
-                    categoryName = supported.category.displayName,
-                    isNow = false
-                )
-            }
-        val withNow = hours.mapIndexed { i, h -> if (i == 0) h.copy(isNow = true) else h }
-
-        val records = engine.historyRepository.queryRecentRecords(location = location, limit = 200).getOrNull().orEmpty()
-        val yesterday = when (val c = engine.compareLatestToYesterday(records)) {
-            is YesterdayComparison.Available -> c.summary.deltaFor(HistoricalComparator.AIR_TEMPERATURE)?.let {
-                val d = it.delta
-                when {
-                    kotlin.math.abs(d) < 0.5 -> "About the same temperature as this time yesterday."
-                    d > 0 -> "%.1f° warmer than this time yesterday.".format(java.util.Locale.getDefault(), d)
-                    else -> "%.1f° cooler than this time yesterday.".format(java.util.Locale.getDefault(), -d)
-                }
-            } ?: "No comparable reading from yesterday yet."
-            is YesterdayComparison.Unavailable -> "Hydro will compare with yesterday once it has a saved reading from this time."
-        }
+        val hours = ForecastBars.load(engine, location, count = 24, emphasizeFirst = 1)
         _state.update {
             it.copy(
-                trend = if (withNow.isEmpty()) null else TrendUi(
-                    hours = withNow,
-                    hottest = withNow.maxByOrNull { h -> h.heatIndexC },
-                    coolest = withNow.minByOrNull { h -> h.heatIndexC },
-                    yesterday = yesterday
+                sky = hours.firstOrNull()?.let { h -> SkyUi(skyKindOf(h.weatherCode), h.isDay ?: true, h.severity, moonPhaseAt(System.currentTimeMillis())) },
+                trend = if (hours.isEmpty()) null else TrendUi(
+                    hours = hours,
+                    hottest = hours.maxByOrNull { h -> h.heatIndexC },
+                    coolest = hours.minByOrNull { h -> h.heatIndexC }
                 )
             )
         }
@@ -416,7 +422,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun loadHeatLayer() {
         val center = lastLocation
-        val args = jsonObject(
+        val args = jsonArgs(
             "latitude" to center.latitude, "longitude" to center.longitude,
             "radius_km" to 24.0, "resolution_km" to 6.0, "metric" to "HEAT_INDEX_CELSIUS"
         )
@@ -450,86 +456,6 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    // ----- Trip planning -----
-
-    fun setDestination(latitude: Double, longitude: Double) {
-        val mode = _state.value.trip?.mode ?: TripMode.Walk
-        _state.update { it.copy(trip = TripUi(latitude, longitude, mode)) }
-        viewModelScope.launch { planTrip() }
-    }
-
-    /** Uses the place the user searched for as the destination. */
-    fun routeToSearchedPlace() {
-        val place = selectedLocation ?: return
-        setDestination(place.latitude, place.longitude)
-    }
-
-    fun setTripMode(mode: TripMode) {
-        val trip = _state.value.trip ?: return
-        _state.update { it.copy(trip = trip.copy(mode = mode, isLoading = true, error = null)) }
-        viewModelScope.launch { planTrip() }
-    }
-
-    fun clearTrip() = _state.update { it.copy(trip = null) }
-
-    private suspend fun planTrip() {
-        val trip = _state.value.trip ?: return
-        val origin = locationProvider.lastKnownLocation() ?: DEFAULT_LOCATION
-        val args = jsonObject(
-            "origin_latitude" to origin.latitude, "origin_longitude" to origin.longitude,
-            "destination_latitude" to trip.destinationLat, "destination_longitude" to trip.destinationLon,
-            "travel_mode" to trip.mode.apiName
-        )
-        when (val outcome = engine.toolRegistry.executeJson("get_route_conditions", args)) {
-            is ToolCallOutcome.Failure -> _state.update {
-                it.copy(trip = it.trip?.copy(isLoading = false, error = outcome.error.userMessage()))
-            }
-            is ToolCallOutcome.Success -> {
-                val json = outcome.jsonResult
-                val points = json.getArray("samples")?.items.orEmpty().mapNotNull { s ->
-                    val o = s as? JsonValue.ObjectValue ?: return@mapNotNull null
-                    TripPoint(
-                        latitude = o.getDouble("latitude") ?: return@mapNotNull null,
-                        longitude = o.getDouble("longitude") ?: return@mapNotNull null,
-                        severity = NwsHeatIndexCategory.entries.firstOrNull { c -> c.name == o.getString("category") }?.severityRank ?: 0
-                    )
-                }
-                _state.update {
-                    it.copy(
-                        trip = it.trip?.copy(
-                            isLoading = false,
-                            error = null,
-                            distanceKm = json.getDouble("distance_km"),
-                            durationMinutes = json.getInt("duration_minutes"),
-                            worstCategory = NwsHeatIndexCategory.entries
-                                .firstOrNull { c -> c.name == json.getString("worst_category") }?.displayName,
-                            advisories = json.getArray("advisories")?.items.orEmpty()
-                                .mapNotNull { a -> (a as? JsonValue.StringValue)?.value },
-                            points = points,
-                            method = json.getString("route_method")
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    private fun jsonObject(vararg pairs: Pair<String, Any>): String = SafeJsonCodec.stringify(
-        JsonValue.ObjectValue(
-            LinkedHashMap<String, JsonValue>().apply {
-                pairs.forEach { (k, v) ->
-                    put(
-                        k,
-                        when (v) {
-                            is Double -> JsonValue.NumberValue(v.toString(), v)
-                            else -> JsonValue.StringValue(v.toString())
-                        }
-                    )
-                }
-            }
-        )
-    )
 
     /** Deterministic advice: urgency, ordered actions and the coolest forecast window. */
     private suspend fun loadRecommendation(location: GeoLocation) {
@@ -572,37 +498,121 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private var askJob: kotlinx.coroutines.Job? = null
+    private var nextMessageId = 1L
+
+    private fun newMessage(
+        fromUser: Boolean,
+        text: String,
+        sources: List<String> = emptyList(),
+        isError: Boolean = false,
+        animate: Boolean = false
+    ) = ChatMessage(nextMessageId++, fromUser, text, sources, isError, animate)
+
     /** Sends a question to the Gemini-backed orchestrator; every number comes from a tool. */
     fun ask(prompt: String) {
         val text = prompt.trim()
         if (text.isEmpty() || _state.value.isAsking) return
-        _state.update {
-            it.copy(isAsking = true, chat = it.chat + ChatMessage(fromUser = true, text = text))
+        send(text, addUserMessage = true)
+    }
+
+    /** Re-sends the last question after a failed answer. */
+    fun retryAsk() {
+        if (_state.value.isAsking) return
+        val chat = _state.value.chat
+        val lastQuestion = chat.lastOrNull { it.fromUser }?.text ?: return
+        _state.update { it.copy(chat = it.chat.dropLastWhile { m -> m.isError }) }
+        send(lastQuestion, addUserMessage = false)
+    }
+
+    /** Stops the answer that is being prepared. */
+    fun stopAsking() {
+        askJob?.cancel()
+        _state.update { it.copy(isAsking = false, askStatus = null) }
+    }
+
+    /** Clears the conversation. */
+    fun newChat() {
+        askJob?.cancel()
+        _state.update { it.copy(chat = emptyList(), isAsking = false, askStatus = null) }
+    }
+
+    /** Called once a reply has finished typing out, so it never types out again. */
+    fun markRevealed(id: Long) {
+        _state.update { st -> st.copy(chat = st.chat.map { if (it.id == id) it.copy(animate = false) else it }) }
+    }
+
+    private fun send(text: String, addUserMessage: Boolean) {
+        val history = _state.value.chat
+            .filter { !it.isError }
+            .takeLast(MAX_HISTORY_MESSAGES)
+            .joinToString("\n") { (if (it.fromUser) "User: " else "Hydro: ") + it.text.take(MAX_HISTORY_CHARS) }
+        val context = trips.contextBlock()
+        val prompt = buildString {
+            if (context != null) append("What the user is looking at right now:\n$context\n\n")
+            if (history.isNotBlank()) append("Earlier in this chat:\n$history\n\n")
+            if (isNotEmpty()) append("New question: ")
+            append(text)
         }
-        viewModelScope.launch {
-            val outcome = app.orchestrator.respond(
-                userPrompt = text,
-                userLocationContext = lastLocation
+
+        _state.update {
+            it.copy(
+                isAsking = true,
+                askStatus = "Thinking",
+                chat = if (addUserMessage) it.chat + newMessage(fromUser = true, text = text) else it.chat
             )
-            val reply = when (outcome) {
-                is HydroAssistantOutcome.Responded -> ChatMessage(
-                    fromUser = false,
-                    text = outcome.responseText,
-                    note = outcome.grounding.executedTools
-                        .filter { it.succeeded }
-                        .joinToString(" · ") { it.toolName }
-                        .ifBlank { null }
-                )
-                is HydroAssistantOutcome.ModelUnavailable -> ChatMessage(
-                    fromUser = false,
-                    text = "The assistant isn't available right now."
-                )
-                is HydroAssistantOutcome.Failed -> ChatMessage(
-                    fromUser = false,
-                    text = "I couldn't finish that. ${outcome.error.userMessage()}"
-                )
+        }
+        val steps = LinkedHashSet<String>()
+        askJob = viewModelScope.launch {
+            // If nothing has happened for a while, say so instead of sitting on "Thinking".
+            val slowHint = launch {
+                delay(SLOW_ANSWER_HINT_MILLIS)
+                _state.update { if (it.isAsking && it.askStatus == "Thinking") it.copy(askStatus = "Still working on it") else it }
             }
-            _state.update { it.copy(isAsking = false, chat = it.chat + reply) }
+            try {
+                val outcome = kotlinx.coroutines.withTimeout(ANSWER_TIMEOUT_MILLIS) { app.orchestrator.respond(
+                    userPrompt = prompt,
+                    userLocationContext = _state.value.trip?.let { GeoLocation(it.destinationLat, it.destinationLon) } ?: lastLocation,
+                    permissionGate = privacy.assistantGate,
+                    onToolStarted = { tool ->
+                        AssistantLabels.source(tool)?.let(steps::add)
+                        _state.update { it.copy(askStatus = AssistantLabels.activity(tool)) }
+                    }
+                ) }
+                val reply = when (outcome) {
+                    is HydroAssistantOutcome.Responded ->
+                        newMessage(fromUser = false, text = outcome.responseText, sources = steps.toList(), animate = true)
+                    is HydroAssistantOutcome.ModelUnavailable ->
+                        newMessage(fromUser = false, text = "The assistant isn't available right now.", isError = true)
+                    is HydroAssistantOutcome.Failed ->
+                        newMessage(fromUser = false, text = "I couldn't finish that. ${outcome.error.userMessage()}", isError = true)
+                }
+                _state.update { it.copy(isAsking = false, askStatus = null, chat = it.chat + reply) }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                _state.update {
+                    it.copy(
+                        isAsking = false,
+                        askStatus = null,
+                        chat = it.chat + newMessage(
+                            fromUser = false,
+                            text = "That's taking too long. Check your connection and try again.",
+                            isError = true
+                        )
+                    )
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                _state.update {
+                    it.copy(
+                        isAsking = false,
+                        askStatus = null,
+                        chat = it.chat + newMessage(fromUser = false, text = "Something went wrong. Please try again.", isError = true)
+                    )
+                }
+            } finally {
+                slowHint.cancel()
+            }
         }
     }
 
@@ -627,6 +637,11 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private companion object {
+        const val MAX_HISTORY_MESSAGES = 6
+        const val MAX_HISTORY_CHARS = 300
+        const val SLOW_ANSWER_HINT_MILLIS = 15_000L
+        const val ANSWER_TIMEOUT_MILLIS = 90_000L
+
         /** Explicit, disclosed fallback when the user has not granted location access. */
         val DEFAULT_LOCATION = GeoLocation(
             latitude = 7.3775,

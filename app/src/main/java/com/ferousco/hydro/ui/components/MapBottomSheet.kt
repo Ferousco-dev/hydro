@@ -11,23 +11,26 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -49,9 +52,6 @@ class MapSheetState {
     /** Current visible height of the sheet in dp, updated while it is dragged. */
     var visibleHeight by mutableStateOf(HydroDimens.SheetPeekHeight)
         internal set
-
-    fun expand() { detent = SheetDetent.Half }
-    fun collapse() { detent = SheetDetent.Peek }
 }
 
 @Composable
@@ -59,18 +59,19 @@ fun rememberMapSheetState(): MapSheetState = remember { MapSheetState() }
 
 /**
  * Rounded bottom sheet with three detents (peek, half, full). It is drawn over the map, never
- * replaces it. Only the handle area drags the sheet; the content scrolls independently once the
- * sheet is fully open.
+ * replaces it. Only the handle drags the sheet (tapping it cycles the detents, for accessibility);
+ * the content scrolls independently.
  *
+ * It is an inset card that floats above the tab bar ([bottomSpace] is the room reserved for the bar),
+ * so the map stays visible around the bar. Detent heights are measured above that space.
  */
 @Composable
 fun MapBottomSheet(
     state: MapSheetState,
     modifier: Modifier = Modifier,
     topInset: Dp = 72.dp,
-    header: @Composable () -> Unit = {},
-    footer: (@Composable () -> Unit)? = null,
-    contentScrollable: Boolean = true,
+    bottomSpace: Dp = 0.dp,
+    glowActive: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -79,9 +80,12 @@ fun MapBottomSheet(
     BoxWithConstraints(modifier = modifier) {
         val containerHeightPx = with(density) { maxHeight.toPx() }
         val topInsetPx = with(density) { topInset.toPx() }
+        val bottomSpacePx = with(density) { bottomSpace.toPx() }
+        // The panel floats above the tab bar, so detents are measured in the space above it.
+        val availablePx = containerHeightPx - bottomSpacePx
         val peekPx = with(density) { HydroDimens.SheetPeekHeight.toPx() }
-        val halfPx = containerHeightPx * 0.5f
-        val fullPx = (containerHeightPx - topInsetPx).coerceAtLeast(halfPx)
+        val halfPx = availablePx * 0.5f
+        val fullPx = (availablePx - topInsetPx).coerceAtLeast(halfPx)
 
         fun heightFor(detent: SheetDetent) = when (detent) {
             SheetDetent.Peek -> peekPx
@@ -91,37 +95,40 @@ fun MapBottomSheet(
 
         val height = remember { Animatable(peekPx) }
 
-        // Follow programmatic detent changes (e.g. expand after a search).
-        androidx.compose.runtime.LaunchedEffect(state.detent, containerHeightPx, topInsetPx) {
+        LaunchedEffect(state.detent, containerHeightPx, topInsetPx, bottomSpacePx) {
             height.animateTo(heightFor(state.detent), tween(260, easing = FastOutSlowInEasing))
         }
-        androidx.compose.runtime.LaunchedEffect(height.value) {
-            state.visibleHeight = with(density) { height.value.toDp() }
+        LaunchedEffect(height.value, bottomSpace) {
+            state.visibleHeight = with(density) { height.value.toDp() } + bottomSpace
         }
 
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomSpace)
+                .padding(horizontal = HydroDimens.SheetInset)
                 .fillMaxWidth()
                 .height(with(density) { height.value.toDp() })
+                .aiGlow(glowActive, 24.dp)
                 .shadow(8.dp, HydroShapes.Sheet, clip = false)
                 .background(HydroColors.SnowWhite, HydroShapes.Sheet)
+                .clip(HydroShapes.Sheet)
         ) {
-            Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 // Drag handle: the only draggable region.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(HydroDimens.SheetHandleAreaHeight)
                         .semantics { contentDescription = "Drag to resize panel" }
-                        .clickable(role = androidx.compose.ui.semantics.Role.Button) {
+                        .clickable(role = Role.Button) {
                             state.detent = when (state.detent) {
                                 SheetDetent.Peek -> SheetDetent.Half
                                 SheetDetent.Half -> SheetDetent.Full
                                 SheetDetent.Full -> SheetDetent.Peek
                             }
                         }
-                        .pointerInput(containerHeightPx) {
+                        .pointerInput(containerHeightPx, bottomSpacePx) {
                             detectVerticalDragGestures(
                                 onVerticalDrag = { change, dragAmount ->
                                     change.consume()
@@ -146,19 +153,15 @@ fun MapBottomSheet(
                             .background(HydroColors.Hairline, RoundedCornerShape(2.dp))
                     )
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = HydroDimens.ScreenEdge)) { header() }
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .then(if (contentScrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                        .verticalScroll(rememberScrollState())
                         .padding(horizontal = HydroDimens.ScreenEdge)
+                        .padding(bottom = HydroDimens.SpaceMd)
                 ) {
                     content()
-                }
-                // Pinned to the bottom of the sheet, above the keyboard and the system gesture bar.
-                if (footer != null) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = HydroDimens.ScreenEdge)) { footer() }
                 }
             }
         }

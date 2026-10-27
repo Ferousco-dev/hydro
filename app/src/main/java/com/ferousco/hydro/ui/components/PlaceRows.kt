@@ -65,7 +65,7 @@ fun SheetSectionTitle(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = HydroColors.TextPrimary,
-        modifier = modifier.padding(top = HydroDimens.SpaceXl, bottom = HydroDimens.SpaceSm)
+        modifier = modifier.padding(top = HydroDimens.SpaceLg, bottom = HydroDimens.SpaceXs)
     )
 }
 
@@ -137,25 +137,5 @@ fun StatusPill(
     ) {
         Box(Modifier.size(6.dp).background(foreground, CircleShape))
         Text(text, style = MaterialTheme.typography.labelMedium, color = foreground)
-    }
-}
-
-/** One chat message. The user's text sits in an ice-blue bubble; Hydro's replies are plain text. */
-@Composable
-fun ChatMessageRow(
-    fromUser: Boolean,
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = if (fromUser) Alignment.End else Alignment.Start
-    ) {
-        Column(
-            modifier = (if (fromUser) Modifier.background(HydroColors.IceBlue, HydroShapes.Bubble) else Modifier)
-                .padding(if (fromUser) 12.dp else 0.dp)
-        ) {
-            Text(text, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextPrimary)
-        }
     }
 }

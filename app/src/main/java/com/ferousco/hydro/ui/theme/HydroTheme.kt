@@ -5,7 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +42,24 @@ object HydroColors {
 
     val Scrim = Color(0x1A0F1B2D)
 
+    /**
+     * Air-temperature colours, all dark enough for text on snow white. They only describe how warm it
+     * is; whether it is risky comes from the heat-risk assessment and is shown separately.
+     */
+    val TempCool = Color(0xFF1A6FB8)
+    val TempComfortable = Color(0xFF17704F)
+    val TempWarm = Color(0xFFA86400)
+    val TempHot = Color(0xFFC4431C)
+    val TempExtreme = Color(0xFFB3261E)
+    fun temperature(celsius: Double?): Color = when {
+        celsius == null -> TextPrimary
+        celsius < 15 -> TempCool
+        celsius < 25 -> TempComfortable
+        celsius < 31 -> TempWarm
+        celsius < 37 -> TempHot
+        else -> TempExtreme
+    }
+
     /** Heat-risk ramp, indexed by NWS category rank 0..4. Always paired with a text label. */
     val HeatRamp = listOf(
         Color(0xFF5BA3EC), // below caution
@@ -67,11 +87,19 @@ object HydroDimens {
 
     val SearchBarHeight = 48.dp
     val ChipHeight = 36.dp
-    val SheetPeekHeight = 232.dp
+    val SheetPeekHeight = 224.dp
+    val TabBarHeight = 64.dp
+    /** Gap between the tab bar and the screen edge / system gesture bar. */
+    val TabBarGap = 8.dp
+
+    /** Breathing room between the floating panel and the tab bar. */
+    val TabBarClearance = 16.dp
     val SheetHandleAreaHeight = 28.dp
     val SheetHandleWidth = 36.dp
     val SheetHandleHeight = 4.dp
     val ScreenEdge = 16.dp
+    /** Side margin that insets the floating panel from the screen edge. */
+    val SheetInset = 8.dp
 }
 
 object HydroShapes {
@@ -82,8 +110,12 @@ object HydroShapes {
     val Capsule = RoundedCornerShape(percent = 50)
     val Search = Capsule
     val Chip = Capsule
-    val Sheet = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    /** The panel floats above the tab bar as an inset card, so all four corners are rounded. */
+    val Sheet = RoundedCornerShape(24.dp)
     val Skeleton = RoundedCornerShape(6.dp)
+
+    /** Message field: a capsule when one line, a soft rounded box as it grows to four. */
+    val Input = RoundedCornerShape(26.dp)
     val Bubble = RoundedCornerShape(16.dp)
 }
 
@@ -108,6 +140,7 @@ private val HydroColorScheme = lightColorScheme(
 private val Family = FontFamily.Default
 
 private val HydroTypography = Typography(
+    displayLarge = TextStyle(fontFamily = Family, fontSize = 72.sp, lineHeight = 76.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-2).sp),
     displaySmall = TextStyle(fontFamily = Family, fontSize = 32.sp, lineHeight = 38.sp, fontWeight = FontWeight.Normal),
     titleLarge = TextStyle(fontFamily = Family, fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
     titleMedium = TextStyle(fontFamily = Family, fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
@@ -132,7 +165,8 @@ fun HydroTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = HydroColorScheme,
         typography = HydroTypography,
-        shapes = HydroMaterialShapes,
-        content = content
-    )
+        shapes = HydroMaterialShapes
+    ) {
+        CompositionLocalProvider(LocalIndication provides HydroPressIndication, content = content)
+    }
 }

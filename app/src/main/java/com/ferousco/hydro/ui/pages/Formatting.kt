@@ -24,6 +24,10 @@ internal fun urgencyColors(urgency: String): Pair<Color, Color> = when (urgency)
 
 internal fun formatDuration(minutes: Int): String = when {
     minutes < 60 -> "$minutes min"
-    minutes % 60 == 0 -> "${minutes / 60} h"
-    else -> "${minutes / 60} h ${minutes % 60} min"
+    minutes < 24 * 60 -> if (minutes % 60 == 0) "${minutes / 60} h" else "${minutes / 60} h ${minutes % 60} min"
+    else -> "${minutes / (24 * 60)} d ${minutes % (24 * 60) / 60} h"
 }
+
+/** One decimal for short trips, whole kilometres (with separators) for long ones. */
+internal fun formatDistanceKm(km: Double): String =
+    if (km >= 100) String.format(Locale.getDefault(), "%,.0f km", km) else String.format(Locale.getDefault(), "%.1f km", km)

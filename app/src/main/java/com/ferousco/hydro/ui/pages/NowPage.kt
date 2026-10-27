@@ -13,29 +13,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ferousco.hydro.ui.HydroUiState
-import com.ferousco.hydro.ui.TripMode
-import com.ferousco.hydro.ui.TripUi
 import com.ferousco.hydro.ui.components.ActionRow
 import com.ferousco.hydro.ui.components.AppleActivityIndicator
 import com.ferousco.hydro.ui.components.HydroIconButton
-import com.ferousco.hydro.ui.components.HydroPrimaryButton
 import com.ferousco.hydro.ui.components.HydroTextButton
 import com.ferousco.hydro.ui.components.IndicatorSize
-import com.ferousco.hydro.ui.components.MetricTile
-import com.ferousco.hydro.ui.components.MetricTileRow
+import com.ferousco.hydro.ui.components.MetricCell
+import com.ferousco.hydro.ui.components.MetricGrid
 import com.ferousco.hydro.ui.components.PhIcon
 import com.ferousco.hydro.ui.components.PlaceDetailsHeader
-import com.ferousco.hydro.ui.components.SegmentedControl
 import com.ferousco.hydro.ui.components.SheetSectionTitle
 import com.ferousco.hydro.ui.components.SkeletonPlaceDetails
 import com.ferousco.hydro.ui.components.SkeletonPlaceRows
-import com.ferousco.hydro.ui.components.SkeletonText
 import com.ferousco.hydro.ui.components.StatusPill
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
-import com.ferousco.hydro.ui.theme.HydroShapes
 import androidx.compose.foundation.background
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -46,10 +45,7 @@ import java.util.Locale
 fun NowPage(
     state: HydroUiState,
     activityLabel: String,
-    onRefresh: () -> Unit,
-    onRouteHere: () -> Unit,
-    onTripMode: (TripMode) -> Unit,
-    onClearTrip: () -> Unit
+    onRefresh: () -> Unit
 ) {
     val hasData = state.airTemperatureCelsius != null || state.heatIndexCelsius != null
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = HydroDimens.SpaceXl)) {
@@ -88,83 +84,72 @@ fun NowPage(
         }
 
         if (hasData) {
-            // Glance row: temperature on the left, risk on the right.
+            // Hero: the temperature is the anchor; risk and "feels like" sit beside it, subordinate.
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = HydroDimens.SpaceSm),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().padding(top = HydroDimens.SpaceMd),
+                verticalAlignment = Alignment.Bottom
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "${state.airTemperatureCelsius.formatOrDash(0)}°",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = HydroColors.TextPrimary
-                    )
+                val tempText = state.airTemperatureCelsius.formatOrDash(0)
+                Text(
+                    text = buildAnnotatedString {
+                        append(tempText)
+                        if (tempText != "—") withStyle(SpanStyle(fontSize = 44.sp, fontWeight = FontWeight.Normal)) { append("°") }
+                    },
+                    style = MaterialTheme.typography.displayLarge,
+                    color = HydroColors.temperature(state.airTemperatureCelsius),
+                    modifier = Modifier.weight(1f)
+                )
+                Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(bottom = HydroDimens.SpaceSm)) {
+                    state.recommendation?.let { rec ->
+                        val (fg, bg) = urgencyColors(rec.urgency)
+                        StatusPill(
+                            text = rec.urgency.lowercase().replaceFirstChar { it.uppercase() } + " risk",
+                            foreground = fg,
+                            background = bg
+                        )
+                    }
                     state.feelsLikeCelsius?.let {
                         Text(
                             "Feels like ${it.formatOrDash(0)}°",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = HydroColors.TextSecondary
+                            color = HydroColors.TextSecondary,
+                            modifier = Modifier.padding(top = HydroDimens.SpaceSm)
                         )
                     }
-                }
-                state.recommendation?.let { rec ->
-                    val (fg, bg) = urgencyColors(rec.urgency)
-                    StatusPill(
-                        text = rec.urgency.lowercase().replaceFirstChar { it.uppercase() } + " risk",
-                        foreground = fg,
-                        background = bg
-                    )
                 }
             }
 
             state.recommendation?.let { rec ->
                 Text(
                     rec.headline,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     color = HydroColors.TextPrimary,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
+                    modifier = Modifier.padding(top = HydroDimens.SpaceSm)
                 )
                 rec.bestWindow?.let {
-                    Text(
-                        "Coolest window · $it",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = HydroColors.Blue,
-                        modifier = Modifier.padding(top = HydroDimens.SpaceXs)
-                    )
+                    Row(
+                        modifier = Modifier.padding(top = HydroDimens.SpaceXs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("Coolest window", style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
+                        Text(it, style = MaterialTheme.typography.labelLarge, color = HydroColors.Blue)
+                    }
                 }
             }
 
-            if (state.isCustomLocation && state.trip == null) {
-                HydroPrimaryButton(
-                    text = "Route here from my location",
-                    onClick = onRouteHere,
-                    modifier = Modifier.fillMaxWidth().padding(top = HydroDimens.SpaceLg)
-                )
-            }
-
-            state.trip?.let { TripCard(it, onTripMode, onClearTrip) }
-
-            Column(
+            MetricGrid(
                 modifier = Modifier.padding(top = HydroDimens.SpaceLg),
-                verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceSm)
-            ) {
-                MetricTileRow(
-                    first = {
-                        MetricTile(PhIcon.Thermometer, "Heat index", state.heatIndexCelsius?.let { "${it.formatOrDash(0)}°" } ?: "—", shortCategory(state.heatCategory), it)
+                cells = listOf(
+                    { m ->
+                        val rank = state.recommendation?.urgency?.let { urgencyColors(it).first } ?: HydroColors.TextSecondary
+                        MetricCell(PhIcon.Thermometer, "Heat index", state.heatIndexCelsius?.let { "${it.formatOrDash(0)}°" } ?: "—", m, shortCategory(state.heatCategory), rank)
                     },
-                    second = {
-                        MetricTile(PhIcon.Droplet, "Humidity", state.relativeHumidityPercent.formatOrDash(0).let { v -> if (v == "—") v else "$v%" }, null, it)
-                    }
+                    { m -> MetricCell(PhIcon.Droplet, "Humidity", state.relativeHumidityPercent.formatOrDash(0).let { v -> if (v == "—") v else "$v%" }, m) },
+                    { m -> MetricCell(PhIcon.Wind, "Wind", state.windSpeedMetersPerSecond.formatOrDash(1).let { v -> if (v == "—") v else "$v m/s" }, m) },
+                    { m -> MetricCell(PhIcon.Outdoor, "UV index", state.uvIndex.formatOrDash(1), m, state.uvCategory?.substringBefore(" (")) }
                 )
-                MetricTileRow(
-                    first = {
-                        MetricTile(PhIcon.Wind, "Wind", state.windSpeedMetersPerSecond.formatOrDash(1).let { v -> if (v == "—") v else "$v m/s" }, null, it)
-                    },
-                    second = {
-                        MetricTile(PhIcon.Outdoor, "UV index", state.uvIndex.formatOrDash(1), state.uvCategory?.substringBefore(" ("), it)
-                    }
-                )
-            }
+            )
 
             state.recommendation?.let { rec ->
                 if (rec.actions.isNotEmpty()) {
@@ -193,67 +178,6 @@ fun NowPage(
             }
         }
 
-    }
-}
-
-@Composable
-private fun TripCard(trip: TripUi, onMode: (TripMode) -> Unit, onClear: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = HydroDimens.SpaceLg)
-            .background(HydroColors.IceBlue.copy(alpha = 0.6f), HydroShapes.Control)
-            .padding(HydroDimens.SpaceMd),
-        verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceSm)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Trip from where you are", style = MaterialTheme.typography.labelLarge, color = HydroColors.TextPrimary, modifier = Modifier.weight(1f))
-            HydroTextButton("Clear", onClear)
-        }
-        SegmentedControl(
-            options = TripMode.entries.map { it to it.label },
-            selected = trip.mode,
-            onSelect = onMode
-        )
-        when {
-            trip.isLoading -> Column(verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceSm)) {
-                SkeletonText(widthFraction = 0.5f, lineHeight = 22.dp)
-                SkeletonText(widthFraction = 0.8f)
-            }
-            trip.error != null -> Text(trip.error, style = MaterialTheme.typography.bodyMedium, color = HydroColors.Danger)
-            else -> {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(HydroDimens.SpaceMd)
-                ) {
-                    Text(
-                        listOfNotNull(
-                            trip.distanceKm?.let { "%.1f km".format(Locale.getDefault(), it) },
-                            trip.durationMinutes?.let { formatDuration(it) }
-                        ).joinToString(" · "),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = HydroColors.TextPrimary
-                    )
-                    trip.worstCategory?.let {
-                        StatusPill(
-                            "Worst: ${shortCategory(it)}",
-                            foreground = HydroColors.TextPrimary,
-                            background = HydroColors.FloatingSurface
-                        )
-                    }
-                }
-                trip.advisories.take(3).forEach {
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
-                }
-                if (trip.method?.contains("GREAT_CIRCLE") == true) {
-                    Text(
-                        "Estimated from straight-line distance.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = HydroColors.Warning
-                    )
-                }
-            }
-        }
     }
 }
 

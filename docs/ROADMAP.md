@@ -6,7 +6,7 @@ Dates are placeholders until the event window is confirmed. Each day ends with a
 |---|---|---|---|
 | **1** | Foundations and integrations (done) | Core engine, 20 tools, Gemini orchestrator, Google/Tavily/NASA/Open-Meteo providers, Room, WorkManager alerts | `./gradlew :core-engine:test :app:testDebugUnitTest :app:assembleDebug` green |
 | **2** | Prove it live | Real keys in `local.properties`; live smoke test of every provider and the Gemini tool loop; fix parser/model-id surprises; run on emulator | "Walk 12 km this afternoon" answered with real data |
-| **3** | UI | Dashboard polish, chat, alerts and history screens, settings (units, quiet hours, activity defaults), onboarding with permissions | Full flow without touching code |
+| **3** | UI (largely done) | Map home, Now panel, Trends, Ask, Alerts, tab bar, map layers, trip card. Remaining: onboarding with permissions, units setting | Full flow without touching code |
 | **4** | Map and standout features | Maps SDK screen with air-quality tile overlay and heat-map layer, route-conditions view, nearby-relief pins, Health Connect permission flow | Map demo works offline-tolerantly |
 | **5** | Polish and ship | Demo video (under 3 minutes), screenshots in README, release APK, pitch deck, final docs and changelog, bug bash | Submission checklist complete |
 

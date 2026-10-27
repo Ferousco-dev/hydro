@@ -65,6 +65,9 @@ class HydroApplication : Application() {
 
     private val google = GoogleMapsConfig(BuildConfig.GOOGLE_MAPS_API_KEY)
 
+    /** Health Connect reader, shared by the engine's assistant tool and the app's own screens. */
+    val wearables: HealthConnectWearableDataSource by lazy { HealthConnectWearableDataSource(this) }
+
     val engine: HydroEngine by lazy {
         HydroEngine.create(
             // With a Google key we use real routing, geocoding, places, weather, air quality and
@@ -79,7 +82,7 @@ class HydroApplication : Application() {
             areaInsightsProvider = GoogleAreaInsightsProvider(google),
             elevationProvider = GoogleElevationProvider(google),
             timeZoneProvider = GoogleTimeZoneProvider(google),
-            wearableDataSource = HealthConnectWearableDataSource(this),
+            wearableDataSource = wearables,
             historyStore = RoomEnvironmentalHistoryStore(database.environmentalHistoryDao()),
             preferencesStore = RoomUserPreferencesStore(database.userPreferencesDao()),
             locationSource = AndroidLocationSource(DeviceLocationProvider(this)),
@@ -110,7 +113,7 @@ class HydroApplication : Application() {
     val orchestrator: HydroOrchestrator by lazy {
         engine.createOrchestrator(
             llmClient = llmClient,
-            config = HydroOrchestratorConfig()
+            config = HydroOrchestratorConfig(showSourceAttribution = false)
         )
     }
 }

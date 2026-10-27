@@ -13,3 +13,5 @@ Short records of decisions that shape Hydro. Format: context, decision, conseque
 | 0007 | [API keys in BuildConfig for the hackathon, proxy later](0007-api-keys-in-buildconfig-for-the-hackathon-proxy-later.md) | Accepted (temporary) |
 | 0008 | [Health Connect for wearables, read-only](0008-health-connect-for-wearables-read-only.md) | Accepted |
 | 0009 | [Local-first persistence with Room](0009-local-first-persistence-with-room.md) | Accepted |
+| 0010 | [Map-first UI with a floating tab bar](0010-map-first-ui-with-floating-tab-bar.md) | Accepted |
+| 0011 | [Health data stays on the device unless the user lets the assistant use it](0011-health-data-stays-on-the-device-unless-the-user-allows-the-assistant.md) | Accepted |

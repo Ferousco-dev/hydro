@@ -9,6 +9,7 @@
 | Location exposure | Only a place name goes to Tavily; Gemini runs stateless; history is local |
 | Spam notifications | Quiet hours, dedup window, hourly cap, severity floor |
 | Over-collection of health data | Read-only Health Connect, per-metric grant, no estimation |
+| Health data reaching the AI model | The assistant is blocked from the wearable tool by default; a separate off-by-default switch allows it and discloses that the numbers go to Gemini ([ADR-0011](adr/0011-health-data-stays-on-the-device-unless-the-user-allows-the-assistant.md)) |
 
 ## Known limits (hackathon)
 - API keys are compiled into the APK via `BuildConfig` and are extractable. Use restricted, capped, demo-only keys. Production needs a server-side proxy (ADR-0007).

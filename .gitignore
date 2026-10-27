@@ -31,3 +31,7 @@ bin/
 .settings/
 .vscode/
 .kotlin/
+sky-previews/
+sky-tests/
+# The landing page lives in its own repo (Ferousco-dev/hydro-landing)
+landing/
