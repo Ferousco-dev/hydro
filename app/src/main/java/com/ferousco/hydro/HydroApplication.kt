@@ -6,7 +6,16 @@ import com.ferousco.hydro.core.ai.HydroOrchestrator
 import com.ferousco.hydro.core.ai.HydroOrchestratorConfig
 import com.ferousco.hydro.core.ai.LlmModelCatalog
 import com.ferousco.hydro.core.ai.gemini.GeminiApiConfig
+import com.ferousco.hydro.core.ai.FallbackLlmClient
+import com.ferousco.hydro.core.ai.HostedLlmModelSpec
+import com.ferousco.hydro.core.ai.LlmClient
 import com.ferousco.hydro.core.ai.gemini.GeminiApiLlmClient
+import com.ferousco.hydro.core.integration.AfricaGeocoder
+import com.ferousco.hydro.core.integration.AirQualityProvider
+import com.ferousco.hydro.core.integration.FallbackAirQualityProvider
+import com.ferousco.hydro.core.integration.FallbackGeocoder
+import com.ferousco.hydro.core.integration.FallbackPlacesProvider
+import com.ferousco.hydro.core.integration.FallbackRoutingProvider
 import com.ferousco.hydro.core.integration.GoogleAirQualityProvider
 import com.ferousco.hydro.core.integration.GoogleAreaInsightsProvider
 import com.ferousco.hydro.core.integration.GoogleElevationProvider
@@ -21,6 +30,8 @@ import com.ferousco.hydro.core.integration.GoogleWeatherApiProvider
 import com.ferousco.hydro.core.integration.GreatCircleRoutingProvider
 import com.ferousco.hydro.core.integration.OpenMeteoAirQualityProvider
 import com.ferousco.hydro.core.integration.OpenMeteoGeocoder
+import com.ferousco.hydro.core.integration.OsrmRoutingProvider
+import com.ferousco.hydro.core.integration.OverpassPlacesProvider
 import com.ferousco.hydro.core.integration.TavilyNewsProvider
 import com.ferousco.hydro.core.integration.UnavailableNewsProvider
 import com.ferousco.hydro.data.local.HydroDatabase
@@ -68,15 +79,25 @@ class HydroApplication : Application() {
     /** Health Connect reader, shared by the engine's assistant tool and the app's own screens. */
     val wearables: HealthConnectWearableDataSource by lazy { HealthConnectWearableDataSource(this) }
 
+    /** Google's air quality when it works, Open-Meteo's modelled estimate otherwise. */
+    val airQualityProvider: AirQualityProvider by lazy {
+        FallbackAirQualityProvider(GoogleAirQualityProvider(google), OpenMeteoAirQualityProvider())
+    }
+
     val engine: HydroEngine by lazy {
         HydroEngine.create(
             // With a Google key we use real routing, geocoding, places, weather, air quality and
             // pollen; without one every provider falls back to a free source or reports unavailable.
-            routingProvider = if (google.isConfigured) GoogleRoutesProvider(google) else GreatCircleRoutingProvider(),
-            geocoder = if (google.isConfigured) GoogleGeocoder(google) else OpenMeteoGeocoder(),
-            airQualityProvider = if (google.isConfigured) GoogleAirQualityProvider(google) else OpenMeteoAirQualityProvider(),
+            // Google first; if it has no key, or the key is not usable yet, the free OpenStreetMap
+            // providers answer instead, so a working key switches everything back automatically.
+            routingProvider = FallbackRoutingProvider(
+                GoogleRoutesProvider(google),
+                FallbackRoutingProvider(OsrmRoutingProvider(), GreatCircleRoutingProvider())
+            ),
+            geocoder = AfricaGeocoder(FallbackGeocoder(GoogleGeocoder(google), OpenMeteoGeocoder())),
+            airQualityProvider = airQualityProvider,
             pollenProvider = GooglePollenProvider(google),
-            placesProvider = GooglePlacesProvider(google),
+            placesProvider = FallbackPlacesProvider(GooglePlacesProvider(google), OverpassPlacesProvider()),
             googleWeatherProvider = GoogleWeatherApiProvider(google),
             isochroneProvider = GoogleIsochroneProvider(google),
             areaInsightsProvider = GoogleAreaInsightsProvider(google),
@@ -100,13 +121,15 @@ class HydroApplication : Application() {
      * Hosted Gemini client. The key is injected at build time from `local.properties` or the
      * environment; see `app/build.gradle.kts`.
      */
-    val llmClient: GeminiApiLlmClient by lazy {
-        GeminiApiLlmClient(
-            config = GeminiApiConfig(
-                apiKey = BuildConfig.GEMINI_API_KEY,
-                model = LlmModelCatalog.DEFAULT
-            ),
+    val llmClient: LlmClient by lazy {
+        fun client(model: HostedLlmModelSpec) = GeminiApiLlmClient(
+            config = GeminiApiConfig(apiKey = BuildConfig.GEMINI_API_KEY, model = model),
             logger = AndroidDiagnosticLogger()
+        )
+        // A free-tier key runs out of the main model's daily quota; the lighter one keeps answering.
+        FallbackLlmClient(
+            primary = client(LlmModelCatalog.DEFAULT),
+            fallback = client(LlmModelCatalog.GEMINI_3_5_FLASH_LITE)
         )
     }
 

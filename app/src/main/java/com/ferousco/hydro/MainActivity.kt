@@ -67,7 +67,7 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
     ) { }
 
     val locationLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
+        contract = ActivityResultContracts.RequestMultiplePermissions()
     ) {
         viewModel.refresh()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -77,7 +77,7 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
 
     LaunchedEffect(Unit) {
         if (!locationProvider.hasLocationPermission()) {
-            locationLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
@@ -111,7 +111,7 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
                 if (locationProvider.hasLocationPermission()) {
                     viewModel.useMyLocation()
                 } else {
-                    locationLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                    locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 }
             },
             onActivity = viewModel::setActivity,
@@ -142,7 +142,9 @@ private fun HydroApp(viewModel: HydroViewModel = viewModel()) {
             onDisconnectHealth = viewModel::disconnectWearables,
             onAssistantMayUseHealth = viewModel::setAssistantMayUseHealthData,
             onRefreshHealth = viewModel::refreshWearables,
-            onAnimations = viewModel::setAnimationsOn
+            onAnimations = viewModel::setAnimationsOn,
+            onFollow = viewModel::setFollowing,
+            onLanguage = viewModel::setLanguage
         )
     }
 

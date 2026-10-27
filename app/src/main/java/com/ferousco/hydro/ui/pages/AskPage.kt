@@ -55,17 +55,11 @@ import com.ferousco.hydro.ui.components.HydroIconButton
 import com.ferousco.hydro.ui.components.PhIcon
 import com.ferousco.hydro.ui.components.PhosphorIcon
 import com.ferousco.hydro.ui.components.ThinkingRow
+import com.ferousco.hydro.ui.i18n.LocalStrings
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 import com.ferousco.hydro.ui.theme.HydroShapes
 import kotlinx.coroutines.launch
-
-private val Suggestions = listOf(
-    "Should I walk 12 km this afternoon?",
-    "When is the coolest time today?",
-    "What should I carry for a long walk?",
-    "Is the air safe for a run right now?"
-)
 
 /**
  * The conversation. Empty: a short prompt and suggestions sit in the middle. Active: a pinned
@@ -99,9 +93,9 @@ fun AskPage(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Ask Hydro", style = MaterialTheme.typography.titleLarge, color = HydroColors.TextPrimary)
+            Text(LocalStrings.current.askTitle, style = MaterialTheme.typography.titleLarge, color = HydroColors.TextPrimary)
             Text(
-                "Get answers based on today's heat, air and your plans.",
+                LocalStrings.current.askSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = HydroColors.TextSecondary,
                 textAlign = TextAlign.Center,
@@ -112,7 +106,7 @@ fun AskPage(
                 verticalArrangement = Arrangement.spacedBy(HydroDimens.SpaceSm),
                 overflow = FlowRowOverflow.Clip
             ) {
-                Suggestions.forEach { suggestion ->
+                LocalStrings.current.askSuggestions.forEach { suggestion ->
                     Text(
                         text = suggestion,
                         style = MaterialTheme.typography.bodyMedium,
@@ -137,12 +131,12 @@ fun AskPage(
     Column(modifier = Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(
-                "Ask Hydro",
+                LocalStrings.current.askTitle,
                 style = MaterialTheme.typography.titleMedium,
                 color = HydroColors.TextPrimary,
                 modifier = Modifier.weight(1f)
             )
-            HydroIconButton(PhIcon.Plus, "New chat", onNewChat)
+            HydroIconButton(PhIcon.Plus, LocalStrings.current.newChat, onNewChat)
         }
         Column(
             modifier = Modifier
@@ -179,7 +173,7 @@ fun AskInputBar(
     onAsk: (String) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Ask about heat, air or your route"
+    placeholder: String? = null
 ) {
     var input by remember { mutableStateOf("") }
     fun submit() {
@@ -205,7 +199,7 @@ fun AskInputBar(
             contentAlignment = Alignment.CenterStart
         ) {
             if (input.isEmpty()) {
-                Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextSecondary)
+                Text(placeholder ?: LocalStrings.current.askPlaceholder, style = MaterialTheme.typography.bodyLarge, color = HydroColors.TextSecondary)
             }
             BasicTextField(
                 value = input,

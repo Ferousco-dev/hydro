@@ -25,7 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
 import com.ferousco.hydro.ui.components.FloatingTabBar
+import com.ferousco.hydro.ui.i18n.LocalStrings
+import com.ferousco.hydro.ui.i18n.Strings
+import com.ferousco.hydro.ui.i18n.stringsFor
 import com.ferousco.hydro.ui.components.PhIcon
 import com.ferousco.hydro.ui.components.TabItem
 import com.ferousco.hydro.ui.pages.AlertsPage
@@ -37,11 +41,11 @@ import com.ferousco.hydro.ui.theme.HydroDimens
 
 private enum class AppTab { Map, Trends, Ask, Alerts }
 
-private val Tabs = listOf(
-    TabItem(AppTab.Map, "Map", PhIcon.TabMap),
-    TabItem(AppTab.Trends, "Trends", PhIcon.TabTrends),
-    TabItem(AppTab.Ask, "Ask", PhIcon.Sparkle),
-    TabItem(AppTab.Alerts, "Alerts", PhIcon.TabAlerts)
+private fun tabsFor(s: Strings) = listOf(
+    TabItem(AppTab.Map, s.tabMap, PhIcon.TabMap),
+    TabItem(AppTab.Trends, s.tabTrends, PhIcon.TabTrends),
+    TabItem(AppTab.Ask, s.tabAsk, PhIcon.Sparkle),
+    TabItem(AppTab.Alerts, s.tabAlerts, PhIcon.TabAlerts)
 )
 
 /**
@@ -51,6 +55,14 @@ private val Tabs = listOf(
  */
 @Composable
 fun HydroScreen(state: HydroUiState, actions: MapActions) {
+    val strings = stringsFor(state.language)
+    CompositionLocalProvider(LocalStrings provides strings) {
+        HydroScreenContent(state, actions, tabsFor(strings))
+    }
+}
+
+@Composable
+private fun HydroScreenContent(state: HydroUiState, actions: MapActions, tabs: List<TabItem<AppTab>>) {
     var tab by rememberSaveable { mutableStateOf(AppTab.Map) }
     // The trip panel can jump to the full chat; it is the only action that needs to change tabs.
     val screenActions = actions.copy(onOpenChat = { tab = AppTab.Ask })
@@ -83,7 +95,8 @@ fun HydroScreen(state: HydroUiState, actions: MapActions) {
                             onConnectHealth = actions.onConnectHealth,
                             onDisconnectHealth = actions.onDisconnectHealth,
                             onAssistantMayUseHealth = actions.onAssistantMayUseHealth,
-                            onAnimations = actions.onAnimations
+                            onAnimations = actions.onAnimations,
+                            onLanguage = actions.onLanguage
                         )
                     }
                     AppTab.Ask -> Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
@@ -122,7 +135,7 @@ fun HydroScreen(state: HydroUiState, actions: MapActions) {
 
         // Always visible. Above the keyboard when it is open, above the gesture bar otherwise.
         FloatingTabBar(
-            items = Tabs,
+            items = tabs,
             selected = tab,
             onSelect = { tab = it },
             modifier = Modifier

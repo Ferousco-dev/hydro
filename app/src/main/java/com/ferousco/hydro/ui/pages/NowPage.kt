@@ -33,6 +33,7 @@ import com.ferousco.hydro.ui.components.SheetSectionTitle
 import com.ferousco.hydro.ui.components.SkeletonPlaceDetails
 import com.ferousco.hydro.ui.components.SkeletonPlaceRows
 import com.ferousco.hydro.ui.components.StatusPill
+import com.ferousco.hydro.ui.i18n.LocalStrings
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 import androidx.compose.foundation.background
@@ -47,6 +48,7 @@ fun NowPage(
     activityLabel: String,
     onRefresh: () -> Unit
 ) {
+    val s = LocalStrings.current
     val hasData = state.airTemperatureCelsius != null || state.heatIndexCelsius != null
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = HydroDimens.SpaceXl)) {
         if (!hasData && state.errorMessage == null) {
@@ -56,11 +58,10 @@ fun NowPage(
         }
 
         PlaceDetailsHeader(
-            title = state.locationLabel,
+            title = if (state.locationLabel == "Near you") s.nearYou else state.locationLabel,
             subtitle = listOfNotNull(
                 activityLabel,
-                state.observationTime?.let { formatTime(it) }?.let { "Updated $it" },
-                if (!state.isLiveAndFresh && state.deliveryOriginLabel != null) "Saved data" else null
+                state.observationTime?.let { formatTime(it) }?.let { "${s.updated} $it" }
             ).joinToString(" · ").ifBlank { null },
             trailing = {
                 if (state.isLoading) {
@@ -68,7 +69,7 @@ fun NowPage(
                         AppleActivityIndicator(size = IndicatorSize.Medium, color = HydroColors.TextSecondary)
                     }
                 } else {
-                    HydroIconButton(PhIcon.Refresh, "Refresh conditions", onRefresh)
+                    HydroIconButton(PhIcon.Refresh, s.refresh, onRefresh)
                 }
             }
         )
@@ -80,7 +81,19 @@ fun NowPage(
                 color = HydroColors.Danger,
                 modifier = Modifier.padding(top = HydroDimens.SpaceMd)
             )
-            HydroTextButton("Try again", onRefresh, modifier = Modifier.offset(x = -HydroDimens.SpaceMd))
+            HydroTextButton(s.tryAgain, onRefresh, modifier = Modifier.offset(x = -HydroDimens.SpaceMd))
+        }
+
+        // No signal: say plainly that these numbers are the last ones we saw.
+        if (state.showingSaved || (hasData && !state.isLiveAndFresh && state.deliveryOriginLabel != null)) {
+            (state.savedAt ?: state.observationTime)?.let { saved ->
+                Text(
+                    s.offlineBanner.format(formatTime(saved)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = HydroColors.Warning,
+                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
+                )
+            }
         }
 
         if (hasData) {
@@ -101,16 +114,16 @@ fun NowPage(
                 )
                 Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(bottom = HydroDimens.SpaceSm)) {
                     state.recommendation?.let { rec ->
-                        val (fg, bg) = urgencyColors(rec.urgency)
+                        val (fg, bg) = feelColors(state.feelsLikeCelsius, state.heatCategory, rec.urgency)
                         StatusPill(
-                            text = rec.urgency.lowercase().replaceFirstChar { it.uppercase() } + " risk",
+                            text = feelWord(state.feelsLikeCelsius, state.heatCategory),
                             foreground = fg,
                             background = bg
                         )
                     }
                     state.feelsLikeCelsius?.let {
                         Text(
-                            "Feels like ${it.formatOrDash(0)}°",
+                            "${s.feelsLike} ${it.formatOrDash(0)}°",
                             style = MaterialTheme.typography.bodyMedium,
                             color = HydroColors.TextSecondary,
                             modifier = Modifier.padding(top = HydroDimens.SpaceSm)
@@ -121,7 +134,7 @@ fun NowPage(
 
             state.recommendation?.let { rec ->
                 Text(
-                    rec.headline,
+                    friendlyHeadline(rec.headline, state.feelsLikeCelsius, state.heatCategory),
                     style = MaterialTheme.typography.titleLarge,
                     color = HydroColors.TextPrimary,
                     modifier = Modifier.padding(top = HydroDimens.SpaceSm)
@@ -132,28 +145,32 @@ fun NowPage(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("Coolest window", style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
+                        Text(s.coolestWindow, style = MaterialTheme.typography.bodyMedium, color = HydroColors.TextSecondary)
                         Text(it, style = MaterialTheme.typography.labelLarge, color = HydroColors.Blue)
                     }
                 }
             }
+
+            state.air?.let { DustBanner(it, Modifier.padding(top = HydroDimens.SpaceLg)) }
 
             MetricGrid(
                 modifier = Modifier.padding(top = HydroDimens.SpaceLg),
                 cells = listOf(
                     { m ->
                         val rank = state.recommendation?.urgency?.let { urgencyColors(it).first } ?: HydroColors.TextSecondary
-                        MetricCell(PhIcon.Thermometer, "Heat index", state.heatIndexCelsius?.let { "${it.formatOrDash(0)}°" } ?: "—", m, shortCategory(state.heatCategory), rank)
+                        MetricCell(PhIcon.Thermometer, s.heatIndex, state.heatIndexCelsius?.let { "${it.formatOrDash(0)}°" } ?: "—", m, feelWord(state.heatIndexCelsius, state.heatCategory), rank)
                     },
-                    { m -> MetricCell(PhIcon.Droplet, "Humidity", state.relativeHumidityPercent.formatOrDash(0).let { v -> if (v == "—") v else "$v%" }, m) },
-                    { m -> MetricCell(PhIcon.Wind, "Wind", state.windSpeedMetersPerSecond.formatOrDash(1).let { v -> if (v == "—") v else "$v m/s" }, m) },
-                    { m -> MetricCell(PhIcon.Outdoor, "UV index", state.uvIndex.formatOrDash(1), m, state.uvCategory?.substringBefore(" (")) }
+                    { m -> MetricCell(PhIcon.Droplet, s.humidity, state.relativeHumidityPercent.formatOrDash(0).let { v -> if (v == "—") v else "$v%" }, m) },
+                    { m -> MetricCell(PhIcon.Wind, s.wind, state.windSpeedMetersPerSecond.formatOrDash(1).let { v -> if (v == "—") v else "$v m/s" }, m) },
+                    { m -> MetricCell(PhIcon.Outdoor, s.uvIndex, state.uvIndex.formatOrDash(1), m, state.uvCategory?.substringBefore(" (")) }
                 )
             )
 
+            state.air?.let { AirCard(it, Modifier.padding(top = HydroDimens.SpaceLg)) }
+
             state.recommendation?.let { rec ->
                 if (rec.actions.isNotEmpty()) {
-                    SheetSectionTitle("What to do")
+                    SheetSectionTitle(s.whatToDo)
                     rec.actions.take(3).forEach { (title, detail) -> ActionRow(title, detail) }
                 }
                 if (!rec.isCurrentData) {
@@ -167,14 +184,6 @@ fun NowPage(
             }
             state.recommendationError?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = HydroColors.Warning, modifier = Modifier.padding(top = HydroDimens.SpaceMd))
-            }
-            if (!state.isLiveAndFresh && state.deliveryOriginLabel != null) {
-                Text(
-                    "You're seeing saved data. Reconnect to update.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = HydroColors.Warning,
-                    modifier = Modifier.padding(top = HydroDimens.SpaceMd)
-                )
             }
         }
 

@@ -82,17 +82,23 @@ import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import java.net.URL
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
-private val ActivityCategories = listOf(
-    MapCategory(ActivityCategory.WALKING, "Walking", PhIcon.Walk),
-    MapCategory(ActivityCategory.RUNNING, "Running", PhIcon.Run),
-    MapCategory(ActivityCategory.CYCLING, "Cycling", PhIcon.Bike),
-    MapCategory(ActivityCategory.OUTDOOR_WORK, "Outdoor work", PhIcon.Work),
-    MapCategory(ActivityCategory.COMMUTING, "Commuting", PhIcon.Commute),
-    MapCategory(ActivityCategory.GENERAL_OUTDOOR, "Outdoors", PhIcon.Outdoor)
-)
+@Composable
+private fun activityCategories(): List<MapCategory<ActivityCategory>> {
+    val s = com.ferousco.hydro.ui.i18n.LocalStrings.current
+    return listOf(
+        MapCategory(ActivityCategory.WALKING, s.walking, PhIcon.Walk),
+        MapCategory(ActivityCategory.RUNNING, s.running, PhIcon.Run),
+        MapCategory(ActivityCategory.CYCLING, s.cycling, PhIcon.Bike),
+        MapCategory(ActivityCategory.OUTDOOR_WORK, s.outdoorWork, PhIcon.Work),
+        MapCategory(ActivityCategory.COMMUTING, s.commuting, PhIcon.Commute),
+        MapCategory(ActivityCategory.GENERAL_OUTDOOR, s.outdoors, PhIcon.Outdoor)
+    )
+}
 
 /** Quiet map: business and transit clutter off so Hydro's own overlays and marker read clearly. */
 private const val QUIET_MAP_STYLE = """[
@@ -124,10 +130,15 @@ fun MapTab(
     var query by remember { mutableStateOf("") }
     var layersOpen by remember { mutableStateOf(false) }
     var airQualityLayer by remember { mutableStateOf(false) }
+    var satellite by remember { mutableStateOf(false) }
     var showPinDialog by remember { mutableStateOf(false) }
     var searchBlockHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
-    val hasMapsKey = BuildConfig.GOOGLE_MAPS_API_KEY.isNotBlank()
+    // Google draws the map once its key really works; until then the free OpenStreetMap map does,
+    // and the switch happens by itself, with no change to the key or the code.
+    val googleUsable = rememberGoogleMapsUsable(BuildConfig.GOOGLE_MAPS_API_KEY)
+    val hasMapsKey = googleUsable == true
+    var freeMap by remember { mutableStateOf<MapView?>(null) }
     val trip = state.trip
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -147,32 +158,58 @@ fun MapTab(
         }
     }
     // Back at the normal view: go to where you are.
-    LaunchedEffect(target, trip == null) {
+    LaunchedEffect(target, trip == null, googleUsable, freeMap) {
         if (target != null && trip == null) {
-            cameraState.animate(CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM), durationMs = 700)
+            when {
+                googleUsable == true -> cameraState.animate(CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM), durationMs = 700)
+                googleUsable == false -> freeMap?.flyTo(target.latitude, target.longitude, FOCUS_ZOOM.toDouble())
+            }
         }
     }
     // A trip: fit the whole route on screen and tuck the panel down so the route is visible.
-    LaunchedEffect(trip?.destinationLat, trip?.destinationLon, trip?.mode, trip?.route?.size) {
+    LaunchedEffect(trip?.destinationLat, trip?.destinationLon, trip?.mode, trip?.route?.size, googleUsable, freeMap) {
         if (trip != null) {
             sheetState.detent = SheetDetent.Peek
             val points = trip.route.map { LatLng(it.latitude, it.longitude) } +
                 listOfNotNull(target, LatLng(trip.destinationLat, trip.destinationLon))
-            val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
-            try {
-                cameraState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 110), durationMs = 900)
-            } catch (_: IllegalStateException) {
-                // The map has not been laid out yet; it will frame itself on the next change.
+            when (googleUsable) {
+                true -> {
+                    val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
+                    try {
+                        cameraState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 110), durationMs = 900)
+                    } catch (_: IllegalStateException) {
+                        // The map has not been laid out yet; it will frame itself on the next change.
+                    }
+                }
+                false -> freeMap?.fitPoints(points.map { GeoPoint(it.latitude, it.longitude) }, 220)
+                null -> Unit
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize().background(HydroColors.SnowWhite)) {
-        GoogleMap(
+        if (googleUsable == false) {
+            FreeMapLayer(
+                pins = state.pins,
+                trip = trip,
+                target = target?.let { GeoPoint(it.latitude, it.longitude) },
+                heat = state.heatLayer.takeIf { state.heatLayerOn },
+                satellite = satellite,
+                bottomInset = HydroDimens.SheetPeekHeight + bottomSpace,
+                onLongPress = { lat, lon -> actions.onSetDestination(lat, lon) },
+                onPinClick = actions.onOpenPin,
+                onReady = { freeMap = it },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        if (googleUsable == true) GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraState,
             contentPadding = PaddingValues(top = topOverlayHeight, bottom = HydroDimens.SheetPeekHeight + bottomSpace),
-            properties = MapProperties(mapStyleOptions = MapStyleOptions(QUIET_MAP_STYLE)),
+            properties = MapProperties(
+                mapType = if (satellite) com.google.maps.android.compose.MapType.HYBRID else com.google.maps.android.compose.MapType.NORMAL,
+                mapStyleOptions = MapStyleOptions(QUIET_MAP_STYLE)
+            ),
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = false,
                 mapToolbarEnabled = false,
@@ -270,12 +307,12 @@ fun MapTab(
                         actions.onDismissSearchError()
                     },
                     isSearching = state.isSearching,
-                    placeholder = "Where to?",
+                    placeholder = com.ferousco.hydro.ui.i18n.LocalStrings.current.searchPlaceholder,
                     modifier = Modifier.padding(horizontal = HydroDimens.ScreenEdge)
                 )
                 if (trip == null) {
                     MapCategoryChips(
-                        categories = ActivityCategories,
+                        categories = activityCategories(),
                         selected = state.activity,
                         onSelect = actions.onActivity,
                         contentPadding = HydroDimens.ScreenEdge
@@ -342,8 +379,30 @@ fun MapTab(
                         heatError = state.heatLayerError,
                         airQualityOn = airQualityLayer,
                         airQualityAvailable = hasMapsKey,
+                        satelliteOn = satellite,
+                        onSatellite = { satellite = !satellite },
                         onHeat = actions.onToggleHeatLayer,
                         onAirQuality = { airQualityLayer = !airQualityLayer }
+                    )
+                }
+                // Zoom buttons: pinching is awkward on an emulator and for one-handed use.
+                MapControlGroup {
+                    MapGroupButton(
+                        icon = PhIcon.Plus,
+                        contentDescription = "Zoom in",
+                        onClick = {
+                            if (googleUsable == true) scope.launch { cameraState.animate(CameraUpdateFactory.zoomIn()) }
+                            else freeMap?.controller?.zoomIn()
+                        }
+                    )
+                    MapGroupButton(
+                        icon = PhIcon.Minus,
+                        contentDescription = "Zoom out",
+                        onClick = {
+                            if (googleUsable == true) scope.launch { cameraState.animate(CameraUpdateFactory.zoomOut()) }
+                            else freeMap?.controller?.zoomOut()
+                        },
+                        showDivider = false
                     )
                 }
                 MapControlGroup {
@@ -351,16 +410,26 @@ fun MapTab(
                         icon = PhIcon.Layers,
                         contentDescription = if (layersOpen) "Close map layers" else "Open map layers",
                         onClick = { layersOpen = !layersOpen },
-                        selected = layersOpen || state.heatLayerOn || airQualityLayer,
+                        selected = layersOpen || state.heatLayerOn || airQualityLayer || satellite,
                         showDivider = false
                     )
                 }
                 CurrentLocationButton(
-                    following = state.usingDeviceLocation && trip == null,
+                    following = state.following && trip == null,
                     onClick = {
+                        // Tap to follow the phone live; tap again to stop.
+                        if (state.following) {
+                            actions.onFollow(false)
+                            return@CurrentLocationButton
+                        }
                         actions.onUseMyLocation()
+                        actions.onFollow(true)
                         if (target != null) {
-                            scope.launch { cameraState.animate(CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM), 600) }
+                            if (googleUsable == true) {
+                                scope.launch { cameraState.animate(CameraUpdateFactory.newLatLngZoom(target, FOCUS_ZOOM), 600) }
+                            } else {
+                                freeMap?.flyTo(target.latitude, target.longitude, FOCUS_ZOOM.toDouble(), 600L)
+                            }
                         }
                     }
                 )
@@ -393,7 +462,7 @@ fun MapTab(
             } else {
                 NowPage(
                     state = state,
-                    activityLabel = ActivityCategories.first { it.value == state.activity }.label,
+                    activityLabel = activityCategories().first { it.value == state.activity }.label,
                     onRefresh = actions.onRefresh
                 )
             }
@@ -441,6 +510,8 @@ data class MapActions(
     val onAssistantMayUseHealth: (Boolean) -> Unit,
     val onRefreshHealth: () -> Unit,
     val onAnimations: (Boolean) -> Unit,
+    val onFollow: (Boolean) -> Unit,
+    val onLanguage: (com.ferousco.hydro.ui.i18n.AppLanguage) -> Unit,
     val onAlertsEnabled: (Boolean) -> Unit,
     val onMinimumSeverity: (NotificationSeverity) -> Unit,
     val onQuietHour: (Boolean, Int) -> Unit
@@ -482,8 +553,10 @@ private fun LayersMenu(
     heatError: String?,
     airQualityOn: Boolean,
     airQualityAvailable: Boolean,
+    satelliteOn: Boolean,
     onHeat: () -> Unit,
-    onAirQuality: () -> Unit
+    onAirQuality: () -> Unit,
+    onSatellite: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -492,6 +565,7 @@ private fun LayersMenu(
             .background(HydroColors.FloatingSurface, HydroShapes.Control)
             .padding(vertical = HydroDimens.SpaceXs)
     ) {
+        LayerRow("Satellite", "See the ground from above", satelliteOn, false, onSatellite)
         LayerRow("Heat", "Where it feels hottest", heatOn, heatLoading, onHeat)
         if (heatError != null) {
             Text(

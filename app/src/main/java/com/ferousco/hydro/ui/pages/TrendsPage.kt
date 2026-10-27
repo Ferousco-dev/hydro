@@ -36,18 +36,20 @@ import com.ferousco.hydro.ui.components.MetricTileRow
 import com.ferousco.hydro.ui.components.PhIcon
 import com.ferousco.hydro.ui.components.SkeletonBox
 import com.ferousco.hydro.ui.components.SkeletonText
+import com.ferousco.hydro.ui.i18n.LocalStrings
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 
 /** Hourly heat for the next 24 hours, with the hottest and coolest hour. */
 @Composable
 fun TrendsPage(state: HydroUiState) {
+    val s = LocalStrings.current
     val trend = state.trend
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = HydroDimens.SpaceXl)) {
         var showKey by remember { mutableStateOf(false) }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Next 24 hours",
+                s.next24Hours,
                 style = MaterialTheme.typography.titleLarge,
                 color = HydroColors.TextPrimary,
                 modifier = Modifier.weight(1f)
@@ -56,7 +58,7 @@ fun TrendsPage(state: HydroUiState) {
         }
         if (showKey) ColorKeyDialog(onDismiss = { showKey = false })
         Text(
-            "How hot it will feel ${if (state.locationLabel == "Near you") "near you" else "in ${state.locationLabel}"}",
+            if (state.locationLabel == "Near you") s.howHotNear else s.howHotIn.format(state.locationLabel),
             style = MaterialTheme.typography.bodyMedium,
             color = HydroColors.TextSecondary
         )
@@ -86,7 +88,7 @@ fun TrendsPage(state: HydroUiState) {
         WeatherNowCard(state, trend.hours, Modifier.padding(top = HydroDimens.SpaceLg))
 
         Text(
-            "Heat through the day",
+            s.heatThroughDay,
             style = MaterialTheme.typography.titleMedium,
             color = HydroColors.TextPrimary,
             modifier = Modifier.padding(top = HydroDimens.SpaceXl)
@@ -99,8 +101,8 @@ fun TrendsPage(state: HydroUiState) {
 
         MetricTileRow(
             modifier = Modifier.padding(top = HydroDimens.SpaceLg),
-            first = { m -> trend.hottest?.let { HourTile("Hottest", it, m) } ?: Box(m) },
-            second = { m -> trend.coolest?.let { HourTile("Coolest", it, m) } ?: Box(m) }
+            first = { m -> trend.hottest?.let { HourTile(s.hottest, it, m) } ?: Box(m) },
+            second = { m -> trend.coolest?.let { HourTile(s.coolest, it, m) } ?: Box(m) }
         )
     }
 }
@@ -111,7 +113,7 @@ private fun HourTile(label: String, hour: TrendHour, modifier: Modifier) {
         icon = PhIcon.Thermometer,
         label = label,
         value = "${hour.label} · ${hour.heatIndexC.formatOrDash(0)}°",
-        note = shortCategory(hour.categoryName),
+        note = feelWord(hour.heatIndexC, hour.categoryName),
         modifier = modifier
     )
 }
@@ -133,12 +135,12 @@ private fun WeatherNowCard(state: HydroUiState, hours: List<TrendHour>, modifier
                     style = MaterialTheme.typography.displaySmall,
                     color = HydroColors.TextPrimary
                 )
-                Text(sky?.label ?: "Now", style = MaterialTheme.typography.titleMedium, color = HydroColors.TextPrimary)
+                Text(sky?.label ?: LocalStrings.current.now, style = MaterialTheme.typography.titleMedium, color = HydroColors.TextPrimary)
                 val hi = hours.mapNotNull { it.tempC }.maxOrNull()
                 val lo = hours.mapNotNull { it.tempC }.minOrNull()
                 Text(
                     buildString {
-                        state.feelsLikeCelsius?.let { append("Feels like ${it.roundToInt()}°") }
+                        state.feelsLikeCelsius?.let { append("${LocalStrings.current.feelsLike} ${it.roundToInt()}°") }
                         if (hi != null && lo != null) append("  ·  H ${hi.roundToInt()}°  L ${lo.roundToInt()}°")
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -155,8 +157,8 @@ private fun WeatherNowCard(state: HydroUiState, hours: List<TrendHour>, modifier
             )
         }
         MetricTileRow(
-            first = { m -> MetricTile(PhIcon.Droplet, "Humidity", state.relativeHumidityPercent?.let { "${it.roundToInt()}%" } ?: "–", null, m) },
-            second = { m -> MetricTile(PhIcon.Wind, "Wind", state.windSpeedMetersPerSecond?.let { "${(it * 3.6).roundToInt()} km/h" } ?: "–", null, m) }
+            first = { m -> MetricTile(PhIcon.Droplet, LocalStrings.current.humidity, state.relativeHumidityPercent?.let { "${it.roundToInt()}%" } ?: "–", null, m) },
+            second = { m -> MetricTile(PhIcon.Wind, LocalStrings.current.wind, state.windSpeedMetersPerSecond?.let { "${(it * 3.6).roundToInt()} km/h" } ?: "–", null, m) }
         )
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -164,7 +166,7 @@ private fun WeatherNowCard(state: HydroUiState, hours: List<TrendHour>, modifier
         ) {
             hours.forEach { h ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(if (h.isNow) "Now" else h.label, style = MaterialTheme.typography.bodySmall, color = HydroColors.TextSecondary)
+                    Text(if (h.isNow) LocalStrings.current.now else h.label, style = MaterialTheme.typography.bodySmall, color = HydroColors.TextSecondary)
                     SkyGlyph(skyKindOf(h.weatherCode), h.isDay ?: true)
                     Text(h.tempC?.let { "${it.roundToInt()}°" } ?: "–", style = MaterialTheme.typography.labelLarge, color = HydroColors.TextPrimary)
                 }

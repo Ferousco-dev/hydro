@@ -30,6 +30,8 @@ import com.ferousco.hydro.ui.components.SegmentedControl
 import com.ferousco.hydro.ui.components.SettingsCard
 import com.ferousco.hydro.ui.components.SettingsCardTitle
 import com.ferousco.hydro.ui.components.TimeStepper
+import com.ferousco.hydro.ui.i18n.AppLanguage
+import com.ferousco.hydro.ui.i18n.LocalStrings
 import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 import java.time.LocalTime
@@ -65,8 +67,10 @@ fun AlertsPage(
     onConnectHealth: () -> Unit,
     onDisconnectHealth: () -> Unit,
     onAssistantMayUseHealth: (Boolean) -> Unit,
-    onAnimations: (Boolean) -> Unit
+    onAnimations: (Boolean) -> Unit,
+    onLanguage: (AppLanguage) -> Unit
 ) {
+    val s = LocalStrings.current
     val prefs = state.alertPrefs
     Column(
         modifier = Modifier.fillMaxWidth().padding(bottom = HydroDimens.SpaceXl),
@@ -75,7 +79,7 @@ fun AlertsPage(
         var showAbout by remember { mutableStateOf(false) }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Alerts",
+                s.tabAlerts,
                 style = MaterialTheme.typography.titleLarge,
                 color = HydroColors.TextPrimary,
                 modifier = Modifier.weight(1f)
@@ -83,6 +87,15 @@ fun AlertsPage(
             HydroIconButton(PhIcon.Info, "About Hydro", { showAbout = true })
         }
         if (showAbout) AboutDialog(onDismiss = { showAbout = false })
+
+        SettingsCard {
+            SettingsCardTitle(s.language, s.languageNote)
+            SegmentedControl(
+                options = AppLanguage.entries.map { it to it.nativeName },
+                selected = state.language,
+                onSelect = onLanguage
+            )
+        }
 
         MasterSwitchCard(
             icon = PhIcon.TabAlerts,

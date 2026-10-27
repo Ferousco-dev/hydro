@@ -8,6 +8,7 @@ import com.ferousco.hydro.core.ai.HydroAssistantOutcome
 import com.ferousco.hydro.core.error.EngineResult
 import com.ferousco.hydro.core.json.JsonValue
 import com.ferousco.hydro.core.tools.ToolCallOutcome
+import com.ferousco.hydro.core.integration.HarmattanAdvisor
 import com.ferousco.hydro.core.integration.NotificationSeverity
 import com.ferousco.hydro.core.integration.WearableMetric
 import com.ferousco.hydro.core.trip.TripMode
@@ -85,6 +86,13 @@ data class HydroUiState(
     val trend: TrendUi? = null,
     val sky: SkyUi? = null,
     val animationsOn: Boolean = true,
+    val language: com.ferousco.hydro.ui.i18n.AppLanguage = com.ferousco.hydro.ui.i18n.AppLanguage.English,
+    val air: AirUi? = null,
+    /** True when the numbers on screen come from the saved copy, not a fresh reading. */
+    val showingSaved: Boolean = false,
+    val savedAt: Instant? = null,
+    /** True while the map is following the phone's live position. */
+    val following: Boolean = false,
     val trip: TripUi? = null,
     val heatLayerOn: Boolean = false,
     val heatLayerLoading: Boolean = false,
@@ -160,11 +168,18 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     private val engine = app.engine
     private val locationProvider = DeviceLocationProvider(application)
 
+    private val cache = SnapshotCache(application)
+
+    // Start from the last saved answer, if any, so the app is useful before (or without) a signal.
     private val _state = MutableStateFlow(
-        HydroUiState(
+        (cache.load() ?: HydroUiState()).copy(
             assistantEnabled = com.ferousco.hydro.BuildConfig.GEMINI_API_KEY.isNotBlank(),
             animationsOn = application.getSharedPreferences("hydro_display", android.content.Context.MODE_PRIVATE)
-                .getBoolean("animations_on", true)
+                .getBoolean("animations_on", true),
+            language = com.ferousco.hydro.ui.i18n.AppLanguage.fromCode(
+                application.getSharedPreferences("hydro_display", android.content.Context.MODE_PRIVATE)
+                    .getString("language", null)
+            )
         )
     )
     val state: StateFlow<HydroUiState> = _state.asStateFlow()
@@ -172,13 +187,14 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     private val privacy = HealthPrivacy(application)
     private val displayPrefs = application.getSharedPreferences("hydro_display", android.content.Context.MODE_PRIVATE)
     private var lastLocation: GeoLocation = DEFAULT_LOCATION
+    private var deviceLocationNow: GeoLocation? = null
     private var refreshQueued = false
 
     private val trips = TripController(
         engine = engine,
         scope = viewModelScope,
         state = _state,
-        originProvider = { locationProvider.lastKnownLocation() ?: DEFAULT_LOCATION },
+        originProvider = { deviceLocationNow ?: locationProvider.lastKnownLocation() ?: DEFAULT_LOCATION },
         writeBrief = { prompt, destination ->
             (app.orchestrator.respond(userPrompt = prompt, userLocationContext = destination, permissionGate = privacy.assistantGate) as? HydroAssistantOutcome.Responded)?.responseText
         }
@@ -201,20 +217,33 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val deviceLocation = locationProvider.lastKnownLocation()
+            val deviceLocation = locationProvider.freshFix()?.location
+            deviceLocationNow = deviceLocation
             val location = deviceLocation ?: DEFAULT_LOCATION
 
             when (val result = engine.weatherRepository.getCurrentObservation(location)) {
                 is EngineResult.Failure -> {
                     _state.update {
-                        it.copy(
-                            isLoading = false,
-                            locationLabel = location.label ?: "Selected location",
-                            usingDeviceLocation = deviceLocation != null,
-                            mapLatitude = location.latitude,
-                            mapLongitude = location.longitude,
-                            errorMessage = result.error.userMessage()
-                        )
+                        val hasData = it.airTemperatureCelsius != null || it.heatIndexCelsius != null
+                        if (hasData) {
+                            // No signal, but there is something to show: keep it and say so, not an error.
+                            it.copy(
+                                isLoading = false,
+                                usingDeviceLocation = deviceLocation != null,
+                                errorMessage = null,
+                                showingSaved = true,
+                                savedAt = it.savedAt ?: it.observationTime
+                            )
+                        } else {
+                            it.copy(
+                                isLoading = false,
+                                locationLabel = location.label ?: "Selected location",
+                                usingDeviceLocation = deviceLocation != null,
+                                mapLatitude = location.latitude,
+                                mapLongitude = location.longitude,
+                                errorMessage = result.error.userMessage()
+                            )
+                        }
                     }
                 }
 
@@ -227,6 +256,7 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                     lastLocation = location
                     loadRecommendation(location)
                     loadTrend(location)
+                    loadAir(location)
 
                     _state.update { previous ->
                         previous.copy(
@@ -267,9 +297,12 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
                             isLiveAndFresh = envelope.isLiveAndFresh,
                             observationTime = observation.observedAt,
                             savedHistoryCount = historyCount,
-                            errorMessage = null
+                            errorMessage = null,
+                            showingSaved = false,
+                            savedAt = null
                         )
                     }
+                    cache.save(_state.value)
                 }
             }
             if (refreshQueued) {
@@ -339,6 +372,27 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private var followJob: kotlinx.coroutines.Job? = null
+
+    /** Follow the phone's live position: the dot moves, and the weather refreshes after a real move. */
+    fun setFollowing(on: Boolean) {
+        followJob?.cancel()
+        followJob = null
+        _state.update { it.copy(following = on) }
+        if (!on) return
+        followJob = viewModelScope.launch {
+            locationProvider.updates().collect { position ->
+                deviceLocationNow = position
+                _state.update {
+                    it.copy(mapLatitude = position.latitude, mapLongitude = position.longitude, usingDeviceLocation = true)
+                }
+                if (lastLocation.distanceKilometersTo(position) > FOLLOW_REFRESH_KM) refresh()
+            }
+            // The stream ended by itself (location off or not allowed), so stop claiming to follow.
+            _state.update { it.copy(following = false) }
+        }
+    }
+
     fun setAnimationsOn(on: Boolean) {
         displayPrefs.edit().putBoolean("animations_on", on).apply()
         _state.update { it.copy(animationsOn = on) }
@@ -359,6 +413,28 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Next-24-hours heat bars, from deterministic engine calls. */
+    /** Air quality and dust for the Now page. A failure leaves whatever was there (even the saved copy). */
+    private suspend fun loadAir(location: GeoLocation) {
+        val reading = (app.airQualityProvider.current(location) as? EngineResult.Success)?.value ?: return
+        val advice = HarmattanAdvisor.assess(reading, location, java.time.LocalDate.now().monthValue)
+        val air = AirUi(
+            usAqi = reading.usAqi?.toInt(),
+            categoryName = reading.category?.displayName,
+            pm25 = reading.pollutantsMicrogramsPerM3["pm2_5"],
+            pm10 = reading.pollutantsMicrogramsPerM3["pm10"],
+            dust = reading.pollutantsMicrogramsPerM3["dust"],
+            dustLevel = advice.level.name,
+            inHarmattanSeason = advice.inHarmattanSeason,
+            source = if (reading.providerId.contains("google", ignoreCase = true)) "Google" else "Open-Meteo"
+        )
+        _state.update { it.copy(air = air) }
+    }
+
+    fun setLanguage(language: com.ferousco.hydro.ui.i18n.AppLanguage) {
+        displayPrefs.edit().putString("language", language.code).apply()
+        _state.update { it.copy(language = language) }
+    }
+
     private suspend fun loadTrend(location: GeoLocation) {
         val hours = ForecastBars.load(engine, location, count = 24, emphasizeFirst = 1)
         _state.update {
@@ -643,6 +719,9 @@ class HydroViewModel(application: Application) : AndroidViewModel(application) {
         const val ANSWER_TIMEOUT_MILLIS = 90_000L
 
         /** Explicit, disclosed fallback when the user has not granted location access. */
+        /** How far the phone must move before the weather is fetched again. */
+        const val FOLLOW_REFRESH_KM = 2.0
+
         val DEFAULT_LOCATION = GeoLocation(
             latitude = 7.3775,
             longitude = 3.9470,

@@ -5,7 +5,7 @@ Every value carries provenance (source, retrieval time, nature: observed / forec
 | Source | Tool(s) | Key | Data | Notes / licence |
 |---|---|---|---|---|
 | Open-Meteo Forecast + Archive | `get_weather`, `get_hourly_forecast`, `get_historical_weather`, heat map | No | Temperature, humidity, wind, UV, solar, precipitation, history (ERA5) | Free tier is non-commercial (CC-BY 4.0); commercial use needs a subscription |
-| Open-Meteo Air Quality | `get_air_quality` (fallback) | No | US/EU AQI, PM2.5, PM10, O3, NO2, SO2, CO, dust | Modelled |
+| Open-Meteo Air Quality | `get_air_quality` (fallback), Now page air card, Harmattan dust warning | No | US/EU AQI, PM2.5, PM10, O3, NO2, SO2, CO, dust | Modelled; always labelled "modelled estimate" on screen. Nigeria has no national ground network |
 | Open-Meteo Geocoding | `geocode_place` (fallback) | No | Place to coordinates | |
 | NASA POWER | `get_solar_climate` | No | Daily solar irradiance, T max/min, RH, rainfall | Satellite/reanalysis, about 3 days latency; `-999` treated as missing |
 | Google Routes | `get_route_conditions` | Google | Real walking/cycling/driving/transit routes and ETA | Replaces the great-circle estimate |
@@ -18,9 +18,16 @@ Every value carries provenance (source, retrieval time, nature: observed / forec
 | Google Elevation | `get_elevation_profile` | Google | Elevation samples along a path: min, max, ascent, descent | Straight path between points, not the road |
 | Google Time Zone | `get_time_zone` | Google | IANA zone and offset for any coordinate | Unknown zone ids fail instead of defaulting |
 | Google Pollen | `get_pollen` | Google | Grass/tree/weed index, season, advice, up to 5 days | Region-limited coverage |
+| OSRM (FOSSGIS servers) | route planning (fallback) | No | Street routes for foot, bike and car, with geometry | Public servers, fair use. No public-transport profile. OpenStreetMap data has gaps in parts of Nigeria |
+| Overpass API (OpenStreetMap) | `find_nearby_relief` (fallback) | No | Named parks, malls and libraries, water and shops, clinics and pharmacies | Public server, fair use; places without a name are skipped; opening hours are not available |
+| Esri light gray and World Imagery tiles | map and satellite view when Google is not usable | No | Base map, satellite photos, place-name overlays | Attribution shown on the map; check Esri's terms before a large public release |
 | Tavily | `get_environmental_news` | Tavily | News on heat, air, floods, storms, health | Untrusted text; only a place name is sent |
 | Android Health Connect | `get_wearable_data` | Permission | Heart rate, HRV, SpO2, respiratory rate, body temperature, steps, active energy | Read-only, per-metric consent |
-| Device | `get_current_location` | Permission | Last-known coarse location | |
+| Device | `get_current_location`, live follow | Permission | A fresh position (precise or approximate, as the person allows), else the last known; a live stream only while following | Precise location is optional |
+
+## Free fallbacks
+
+Search, routes, nearby places and air quality try Google first and use the free providers above when Google is missing or fails. The map itself decides once at launch with a single test request, so a Google key that is not enabled yet never leaves a blank map. Trips are limited to Africa; see `AfricaCoverage` in the core engine.
 
 ## NASA beyond POWER (candidates)
 | API | Value | Key |

@@ -61,7 +61,7 @@ fun HourlyBarChart(
                 modifier = Modifier.weight(1f)
             )
             Text(
-                if (selected == null) "Now" else com.ferousco.hydro.ui.pages.shortCategory(shown.categoryName),
+                if (selected == null) "Now" else com.ferousco.hydro.ui.pages.feelWord(shown.heatIndexC, shown.categoryName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = HydroColors.heat(shown.severity)
             )

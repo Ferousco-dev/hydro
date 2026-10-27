@@ -4,7 +4,21 @@ All notable changes to Hydro are recorded here. Format follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added (Nigeria focus, free map, languages)
+- **Free map and routes.** When Google is missing or fails, the app uses OpenStreetMap-based providers: Esri light gray tiles with labels (osmdroid), OSRM routes, Overpass nearby places and the Open-Meteo geocoder. Search, routes, places and air quality try Google first and fall back automatically (`FallbackRoutingProvider`, `FallbackGeocoder`, `FallbackPlacesProvider`, `FallbackAirQualityProvider`); the map chooses once at launch with a test request.
+- **Satellite view** in the layers menu, for both maps, and **zoom buttons**.
+- **Live location following** with precise location (the user may still choose approximate), and a fresh position request instead of a stale cached fix.
+- **Africa only.** Place search and trips are limited to Africa, with Nigerian results first (`AfricaCoverage`, `AfricaGeocoder`). A trip with no road, such as across an ocean, now says so instead of showing a straight-line estimate.
+- **Air quality card and Harmattan dust warning** on the Now page. The card is labelled "Modelled estimate"; the warning (`HarmattanAdvisor`, tested with real Kano readings) appears only when the readings say so and is named Harmattan from November to March in West Africa.
+- **Saved last answer.** A snapshot of the Now and Trends data is kept on the phone; the app opens with it and says "No signal. Showing what we saw at HH:MM."
+- **Languages.** English, Naija Pidgin and Hausa for the tabs, map, Now, Trends, Ask and the air and dust text, chosen on the Alerts page. A first pass that native speakers should review.
+- **Gemini fallback.** `FallbackLlmClient` answers from a lighter model when the main one is out of quota or down, and keeps Gemini's thought signatures so tool calls are accepted.
+
 ### Changed
+- **Plain heat words.** The risk pill, headline, heat-index note, chart readout, hottest and coolest tiles and the colour key now say how it feels (Freezing to Dangerously hot) instead of "No heat risk" or "Extreme caution". The pill colour follows the word.
+- **Keyboard layout.** The window now resizes for the keyboard instead of also panning, which pushed the chat list under the status bar.
+
+### Changed (earlier in this release)
 - **Now panel hierarchy.** The temperature is now the anchor (72 sp, coloured by how warm it is, separate from the risk assessment); the risk pill and "Feels like" sit beside it, the headline and coolest window follow, and the four readings share one surface with larger values instead of four cards. Panel corners are 24 dp.
 - **Trends.** A live weather card (temperature, sky, humidity, wind, hour-by-hour strip) sits above the heat chart. The chart has a left scale with dotted guides and can be touched or dragged to read any hour.
 - **Weather animation.** A sun (colour follows heat risk, kept soft so it never glares), a moon with its phase at night, and rain or snow over the map, drawn with plain Canvas code so it works on every Android version. One on/off switch on Alerts turns it off.

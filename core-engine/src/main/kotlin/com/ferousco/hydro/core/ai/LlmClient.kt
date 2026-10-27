@@ -58,7 +58,12 @@ data class LlmNativeToolCall(
      * Provider-assigned call id, when the runtime exposes one. Used to correlate the matching
      * tool result on the next request.
      */
-    val callId: String? = null
+    val callId: String? = null,
+    /**
+     * Opaque "thought signature" the provider attached to this call. Gemini rejects a replayed
+     * tool call whose signature is missing, so it is carried through and sent back unchanged.
+     */
+    val thoughtSignature: String? = null
 )
 
 data class LlmConversationMessage(

@@ -100,6 +100,8 @@ dependencies {
     implementation(libs.androidx.health.connect.client)
     implementation(libs.google.maps.compose)
     implementation(libs.google.play.services.maps)
+    // Key-free OpenStreetMap map, shown only while Google Maps is not usable.
+    implementation(libs.osmdroid.android)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

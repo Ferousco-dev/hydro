@@ -2,8 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Optional: only used to query weather for the user's approximate position. -->
+    <!-- The free OpenStreetMap map checks connectivity before it downloads tiles. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Optional: used to find the weather where you are. Precise is needed to follow you live on foot;
+         people can still choose approximate, and Hydro works with either. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!--
       Android 13+ requires a runtime grant before Hydro can post proactive alerts. The sink returns
       NotificationReceipt.Rejected when it is missing, so requesting it stays a UI concern.
@@ -37,7 +41,8 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

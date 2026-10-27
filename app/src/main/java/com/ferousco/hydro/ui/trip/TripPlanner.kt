@@ -1,9 +1,11 @@
 package com.ferousco.hydro.ui.trip
 
 import com.ferousco.hydro.core.HydroEngine
+import com.ferousco.hydro.core.error.EngineError
 import com.ferousco.hydro.core.error.EngineResult
 import com.ferousco.hydro.core.integration.RouteRequest
 import com.ferousco.hydro.core.json.JsonValue
+import com.ferousco.hydro.core.model.AfricaCoverage
 import com.ferousco.hydro.core.model.GeoLocation
 import com.ferousco.hydro.core.model.NwsHeatIndexCategory
 import com.ferousco.hydro.core.tools.ToolCallOutcome
@@ -44,9 +46,24 @@ internal data class TripPlan(
 internal class TripPlanner(private val engine: HydroEngine) {
 
     suspend fun plan(origin: GeoLocation, destination: GeoLocation, mode: TripMode): EngineResult<TripPlan> {
+        // Hydro plans trips inside Africa for now. A destination on another continent can only be
+        // reached by plane, which is not a route this app can plan.
+        if (!AfricaCoverage.contains(destination)) return outsideAfrica("outside_africa")
+        if (!AfricaCoverage.contains(origin)) return outsideAfrica("origin_outside_africa")
         val route = when (val r = engine.routingProvider.planRoute(RouteRequest(origin, destination, mode.travelMode, Instant.now()))) {
             is EngineResult.Failure -> return r
             is EngineResult.Success -> r.value
+        }
+        // A straight line over thousands of kilometres is not a trip anyone can make by road, bike or
+        // on foot (it is how "America to Korea by bike" got a 13-day answer), so say so plainly.
+        if (route.method.contains("GREAT_CIRCLE") && route.distanceKm > MAX_ESTIMATED_KM) {
+            return EngineResult.Failure(
+                EngineError.UnsupportedCalculation(
+                    methodId = "trip_route",
+                    reason = "no_route",
+                    message = "No road or path was found between these places."
+                )
+            )
         }
         val minutes = route.duration.toMinutes().toInt().coerceAtLeast(1)
 
@@ -86,6 +103,19 @@ internal class TripPlanner(private val engine: HydroEngine) {
                 hours = hours
             )
         )
+    }
+
+    private fun outsideAfrica(reason: String) = EngineResult.Failure(
+        EngineError.UnsupportedCalculation(
+            methodId = "trip_route",
+            reason = reason,
+            message = "Hydro plans trips inside Africa for now."
+        )
+    )
+
+    private companion object {
+        /** Beyond this, a straight-line estimate is not offered as a route. */
+        const val MAX_ESTIMATED_KM = 1_500.0
     }
 
     private data class Sample(val severity: Int)

@@ -32,7 +32,7 @@ class AndroidLocationSource(
                 )
             }
 
-            val fix = provider.lastKnownFix()
+            val fix = provider.freshFix()
                 ?: return@withContext EngineResult.Failure(
                     EngineError.UnsupportedCalculation(
                         methodId = "get_current_location",

@@ -22,11 +22,11 @@ import com.ferousco.hydro.ui.theme.HydroColors
 import com.ferousco.hydro.ui.theme.HydroDimens
 
 private val Levels = listOf(
-    "No heat risk" to "Comfortable. No special care.",
-    "Caution" to "Can feel tiring. Drink water, take breaks.",
-    "Extreme caution" to "The heat can wear you down. Find shade, drink often.",
-    "Danger" to "Risky for long. Avoid heavy effort.",
-    "Extreme danger" to "Very dangerous. Stay somewhere cool."
+    "Cool or mild" to "Comfortable. No special care.",
+    "Warm" to "Can feel tiring. Drink water, take breaks.",
+    "Hot" to "The heat can wear you down. Find shade, drink often.",
+    "Very hot" to "Risky for long. Avoid heavy effort.",
+    "Dangerously hot" to "Very dangerous. Stay somewhere cool."
 )
 
 /** What the colours on the heat chart mean, in plain words. */

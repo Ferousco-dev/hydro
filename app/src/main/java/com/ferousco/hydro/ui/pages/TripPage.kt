@@ -137,8 +137,9 @@ private fun Summary(trip: TripUi) {
             modifier = Modifier.weight(1f)
         )
         trip.advice?.takeIf { it.urgency != "UNKNOWN" }?.let { advice ->
-            val (fg, bg) = urgencyColors(advice.urgency)
-            StatusPill(advice.urgency.lowercase().replaceFirstChar { it.uppercase() } + " risk", fg, bg)
+            val feels = trip.hours.firstOrNull { it.isNow }?.heatIndexC ?: trip.hours.firstOrNull()?.heatIndexC
+            val (fg, bg) = feelColors(feels, trip.worstCategory, advice.urgency)
+            StatusPill(feelWord(feels, trip.worstCategory), fg, bg)
         }
     }
     if (trip.straightLine) {
@@ -192,7 +193,7 @@ private fun Advice(trip: TripUi) {
             MetricTile(
                 icon = PhIcon.Thermometer,
                 label = "Heat on the way",
-                value = shortCategory(trip.worstCategory),
+                value = feelWord(trip.hours.firstOrNull { it.isNow }?.heatIndexC ?: trip.hours.firstOrNull()?.heatIndexC, trip.worstCategory),
                 note = null,
                 modifier = m
             )

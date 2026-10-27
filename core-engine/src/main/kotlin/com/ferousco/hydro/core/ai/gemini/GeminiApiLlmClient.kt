@@ -306,6 +306,16 @@ class GeminiApiLlmClient(
     private fun modelSteps(message: LlmConversationMessage): List<JsonValue> = buildList {
         // Function calls first: they are what the following function_result steps refer to.
         for (call in message.nativeToolCalls) {
+            call.thoughtSignature?.let { signature ->
+                add(
+                    JsonValue.ObjectValue(
+                        linkedMapOf(
+                            "type" to JsonValue.StringValue("thought"),
+                            "signature" to JsonValue.StringValue(signature)
+                        )
+                    )
+                )
+            }
             add(
                 JsonValue.ObjectValue(
                     linkedMapOf(
@@ -399,6 +409,7 @@ class GeminiApiLlmClient(
         val steps = root.getArray("steps")?.items.orEmpty()
         val text = StringBuilder()
         val toolCalls = mutableListOf<LlmNativeToolCall>()
+        var pendingSignature: String? = null
 
         for (step in steps) {
             val stepObject = step as? JsonValue.ObjectValue ?: continue
@@ -413,10 +424,14 @@ class GeminiApiLlmClient(
                             toolName = name,
                             arguments = stepObject.getObject("arguments")
                                 ?: JsonValue.ObjectValue(emptyMap()),
-                            callId = stepObject.getString("id")
+                            callId = stepObject.getString("id"),
+                            thoughtSignature = pendingSignature
                         )
                     )
+                    pendingSignature = null
                 }
+                // The signature on a thought step belongs to the tool call that follows it.
+                "thought" -> pendingSignature = stepObject.getString("signature")
                 "model_output" -> {
                     val parts = stepObject.getArray("content")?.items.orEmpty()
                     for (part in parts) {
@@ -426,7 +441,7 @@ class GeminiApiLlmClient(
                         }
                     }
                 }
-                // "thought" steps and any future step type are intentionally ignored: only text
+                // Thought text and any future step type are intentionally ignored: only text
                 // and executable tool calls may reach the user or the registry.
                 else -> Unit
             }
@@ -474,6 +489,7 @@ class GeminiApiLlmClient(
             mapOf(
                 "status" to response.statusCode.toString(),
                 "reason" to (apiStatus ?: "unknown"),
+                "detail" to (apiMessage ?: "none").take(300),
                 "model" to config.model.modelId
             )
         )
